@@ -1,0 +1,40 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>netstandard2.1</TargetFramework>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <None Remove="Microsoft.Azure.Devices" />
+    <None Remove="Microsoft.Extensions.Logging" />
+    <None Remove="StyleCop.Analyzers" />
+    <None Remove="DeploymentFiles\" />
+    <None Remove="DeploymentFiles\LayeredDeployment\" />
+    <None Remove="DeploymentFiles\AutomaticDeployment\" />
+    <None Remove="BusinessLogic\" />
+    <None Remove="IoTEdgeObjectModel" />
+    <None Remove="Tools\" />
+  </ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="Microsoft.Azure.Devices" Version="1.38.1" />
+    <PackageReference Include="IoTEdgeObjectModel" Version="1.1.3" />
+  </ItemGroup>
+  <ItemGroup>
+    <Folder Include="DeploymentFiles\" />
+    <Folder Include="DeploymentFiles\LayeredDeployment\" />
+    <Folder Include="DeploymentFiles\AutomaticDeployment\" />
+    <Folder Include="BusinessLogic\" />
+    <Folder Include="Tools\" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Update="DeploymentFiles\LayeredDeployment\LayeredDeployment2.json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Update="DeploymentFiles\LayeredDeployment\LayeredDeployment1.json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Update="DeploymentFiles\LayeredDeployment\LayeredDeployment3.json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+  </ItemGroup>
+</Project>
