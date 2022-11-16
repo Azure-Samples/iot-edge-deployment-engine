@@ -1,8 +1,0 @@
-{
-    "IsEncrypted": false,
-    "Values": {
-        "AzureWebJobsStorage": "",
-        "IoTHubConnectionString": "",
-        "FUNCTIONS_WORKER_RUNTIME": "dotnet"
-    }
-}
