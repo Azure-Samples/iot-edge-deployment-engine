@@ -14,16 +14,27 @@ using Newtonsoft.Json;
 
 namespace IoTEdgeDeploymentApi
 {
-
+	/// <summary>
+	/// Http controller for layered deployment
+	/// </summary>
 	public class LayeredDeployment
 	{
-		private readonly IIoTEdgeDeploymentBuilder _ioTEdgeDeploymentBuilder;
+		private readonly IIoTEdgeDeploymentBuilder _ioTEdgeLayeredDeploymentBuilder;
 
-		public LayeredDeployment(IIoTEdgeDeploymentBuilder ioTEdgeDeploymentBuilder)
+		/// <summary>
+		/// ctor
+		/// </summary>
+		/// <param name="ioTEdgeLayeredDeploymentBuilder">IoTEdgeLayeredDeploymentBuilder instance per DI</param>
+		public LayeredDeployment(IoTEdgeLayeredDeploymentBuilder ioTEdgeLayeredDeploymentBuilder)
 		{
-			_ioTEdgeDeploymentBuilder = ioTEdgeDeploymentBuilder;
+			_ioTEdgeLayeredDeploymentBuilder = ioTEdgeLayeredDeploymentBuilder;
 		}
 
+		/// <summary>
+		/// Creates a new layered deployment manifest file.
+		/// </summary>
+		/// <param name="req">Http request</param>
+		/// <returns></returns>
 		[FunctionName("IoTEdgeLayeredDeployment")]
 		[OpenApiOperation(operationId: "AddLayeredDeployment", tags: new[] { "name" })]
 		[OpenApiRequestBody(contentType: "application/json", bodyType: typeof(LayeredDeploymentFile), Required = true, Description = "Specifies a file name without file extension and content for the deployment manifest")]
@@ -36,9 +47,9 @@ namespace IoTEdgeDeploymentApi
 				string requestBody = await new StreamReader(req.Body).ReadToEndAsync();
 				var data = JsonConvert.DeserializeObject<LayeredDeploymentFile>(requestBody);
 
-				await _ioTEdgeDeploymentBuilder.AddLayeredDeployment(data.FileName, data.FileContent);
+				await _ioTEdgeLayeredDeploymentBuilder.AddDeployment(data?.FullFileName, data?.FileContent);
 
-				return new OkObjectResult(data.ToString());
+				return new OkObjectResult(requestBody);
 			}
 			catch (System.Exception ex)
 			{

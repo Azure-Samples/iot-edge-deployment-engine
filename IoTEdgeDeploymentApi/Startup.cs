@@ -5,7 +5,6 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.OpenApi.Models;
 using System;
 using IoTEdgeDeploymentEngine;
-using IoTEdgeDeploymentEngine.BusinessLogic;
 using Microsoft.Azure.Devices;
 
 [assembly: FunctionsStartup(typeof(MyNamespace.Startup))]
@@ -18,8 +17,7 @@ namespace MyNamespace
 		{
 			builder.Services
 				.AddSingleton<RegistryManager>((s) => RegistryManager.CreateFromConnectionString(Environment.GetEnvironmentVariable("IoTHubConnectionString")))
-				.AddSingleton<ILayeredDeploymentLogic, LayeredDeploymentLogic>()
-				.AddSingleton<IIoTEdgeDeploymentBuilder, IoTEdgeDeploymentBuilder>()
+				.AddSingleton<IIoTEdgeDeploymentBuilder, IoTEdgeLayeredDeploymentBuilder>()
 				.AddSingleton<IOpenApiConfigurationOptions>(_ =>
 							{
 								var options = new OpenApiConfigurationOptions()

@@ -8,23 +8,17 @@ namespace IoTEdgeDeploymentEngine
 	public interface IIoTEdgeDeploymentBuilder
 	{
 		/// <summary>
-		/// Applies automatic deployments for a subset of defined devices per query.
+		/// Applies deployments for a subset of defined devices per query.
 		/// </summary>
 		/// <returns></returns>
-		Task ApplyAutomaticDeployments();
+		Task ApplyDeployments();
 
 		/// <summary>
-		/// Applies layered deployments for a subset of defined devices per query.
+		/// Adds a deployment to the file system.
 		/// </summary>
+		/// <param name="filePath">Deployment full file path</param>
+		/// <param name="fileContent">Deployment manifest JSON string</param>
 		/// <returns></returns>
-		Task ApplyLayeredDeployments();
-
-		/// <summary>
-		/// Adds layered deployments to file system.
-		/// </summary>
-		/// <param name="fileName">Layered Deployment file name</param>
-		/// <param name="fileContent">Layered Deployment manifest JSON string</param>
-		/// <returns></returns>
-		Task AddLayeredDeployment(string fileName, string fileContent);
+		Task AddDeployment(string filePath, string fileContent);
 	}
 }

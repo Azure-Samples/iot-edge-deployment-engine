@@ -6,9 +6,9 @@
 	public class LayeredDeploymentFile
 	{
 		/// <summary>
-		/// File name of the deployment manifest without file extension.
+		/// Full path and name of the deployment manifest file.
 		/// </summary>
-		public string FileName { get; set; }
+		public string FullFileName { get; set; }
 
 		/// <summary>
 		/// File Content of the deployment manifest in JSON string format.

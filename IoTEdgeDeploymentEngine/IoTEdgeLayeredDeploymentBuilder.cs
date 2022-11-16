@@ -4,33 +4,28 @@ using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
 using IoTEdgeDeploymentEngine.Tools;
-using Microsoft.Azure.Amqp.Framing;
 using Microsoft.Azure.Devices;
-using Microsoft.Azure.Devices.Shared;
-//using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
-using Newtonsoft.Json.Converters;
-using static Microsoft.Azure.Devices.DeploymentManifest;
 
-namespace IoTEdgeDeploymentEngine.BusinessLogic
+//using Microsoft.Extensions.Logging;
+
+
+namespace IoTEdgeDeploymentEngine
 {
-	/// <inheritdoc />
-	public class LayeredDeploymentLogic : ILayeredDeploymentLogic
+	/// <inheritdoc/>
+	public class IoTEdgeLayeredDeploymentBuilder : IIoTEdgeDeploymentBuilder
 	{
 		private const string MANIFEST_DIRECTORY = "./DeploymentFiles/LayeredDeployment";
 		private const string ROUTE_KEY = "route";
-		//private readonly ILogger<LayeredDeploymentLogic> _logger;
 
-		//public LayeredDeploymentLogic(ILogger<LayeredDeploymentLogic> logger)
-		public LayeredDeploymentLogic()
+		public IoTEdgeLayeredDeploymentBuilder()
 		{
 			//_logger = logger;
 		}
-
-		public async Task GetDevicesFromManifests()
+		public async Task ApplyDeployments()
 		{
 			var configurations = await GetFileContent();
-			
+
 			var deviceGroups = configurations.GroupBy(c => c.TargetCondition);
 			foreach (var deviceGroup in deviceGroups)
 			{
@@ -39,12 +34,12 @@ namespace IoTEdgeDeploymentEngine.BusinessLogic
 				var mods = deviceGroup.SelectMany(c =>
 						c.Content.ModulesContent.Where(m => m.Key != "$edgeAgent" && m.Key != "$edgeHub"))
 					.Distinct(new KeyValuePairDictionaryEqualComparer());
-				
+
 				var flattenedRoutes = new List<Route>();
 				foreach (var device in deviceGroup)
 				{
 					var desiredPropsString = device.Content.ModulesContent["$edgeHub"]["properties.desired"].ToString();
-					var desiredProps = JsonConvert.DeserializeObject<PropertiesDesiredEdgeHub>(desiredPropsString);
+					var desiredProps = JsonConvert.DeserializeObject<DeploymentManifest.PropertiesDesiredEdgeHub>(desiredPropsString);
 
 					foreach (var route in desiredProps.Routes)
 					{
@@ -55,10 +50,10 @@ namespace IoTEdgeDeploymentEngine.BusinessLogic
 			}
 		}
 
-		public async Task AddLayeredDeployment(string fileName, string fileContent)
+		public async Task AddDeployment(string filePath, string fileContent)
 		{
-			if (!string.IsNullOrEmpty(fileName) && !string.IsNullOrEmpty(fileContent))
-				await File.WriteAllTextAsync(Path.Combine(MANIFEST_DIRECTORY, $"{fileName}.json"), fileContent);
+			if (!string.IsNullOrEmpty(filePath) && !string.IsNullOrEmpty(fileContent))
+				await File.WriteAllTextAsync(filePath, fileContent);
 			else
 				throw new ArgumentNullException("FileName or FileContent");
 		}
@@ -78,6 +73,6 @@ namespace IoTEdgeDeploymentEngine.BusinessLogic
 			//_logger.LogTrace("Layered deployment files successfully read");
 			return fileContents;
 		}
+
 	}
 }
-

@@ -7,7 +7,7 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "IoTEdgeDeploymentEngine", "
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "IoTEdgeDeploymentTester", "IoTEdgeDeploymentTester\IoTEdgeDeploymentTester.csproj", "{BEB430F2-79D5-425D-9D2A-1D5071CB940F}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "IoTEdgeDeploymentApi", "IoTEdgeDeploymentApi\IoTEdgeDeploymentApi.csproj", "{DF3E18D8-0931-43FA-9E5C-53264BAF1468}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "IoTEdgeDeploymentApi", "IoTEdgeDeploymentApi\IoTEdgeDeploymentApi.csproj", "{DF3E18D8-0931-43FA-9E5C-53264BAF1468}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
