@@ -2,7 +2,9 @@
   "IsEncrypted": false,
   "Values": {
     "AzureWebJobsStorage": "UseDevelopmentStorage=true",
-    "IoTHubConnectionString": "<Add your IoTHub connection string here>",
+    "OpenApi__DocDescription": "This Swagger UI includes the endpoint definitions for the IoTEdgeDeploymentApi.",
+    "OpenApi__DocTitle": "OpenApi Document for the IoTEdgeDeploymentApi",
+    "IoTHubConnectionString": "<IoTHubConnectionString>",
     "FUNCTIONS_WORKER_RUNTIME": "dotnet"
   }
 }

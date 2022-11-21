@@ -20,5 +20,12 @@ namespace IoTEdgeDeploymentEngine
 		/// <param name="fileContent">Deployment manifest JSON string</param>
 		/// <returns></returns>
 		Task AddDeployment(string filePath, string fileContent);
+
+		/// <summary>
+		/// Gets content of a single file.
+		/// </summary>
+		/// <param name="filePath">File path.</param>
+		/// <returns></returns>
+		Task<dynamic> GetFileContent(string filePath);
 	}
 }

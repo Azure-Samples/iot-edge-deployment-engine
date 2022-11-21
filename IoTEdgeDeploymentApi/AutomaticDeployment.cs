@@ -17,29 +17,29 @@ namespace IoTEdgeDeploymentApi
 	/// <summary>
 	/// Http controller for layered deployment
 	/// </summary>
-	public class LayeredDeployment
+	public class AutomaticDeployment
 	{
-		private readonly IIoTEdgeDeploymentBuilder _ioTEdgeLayeredDeploymentBuilder;
+		private readonly IIoTEdgeDeploymentBuilder _ioTEdgeAutomaticDeploymentBuilder;
 
 		/// <summary>
 		/// ctor
 		/// </summary>
-		/// <param name="ioTEdgeLayeredDeploymentBuilder">IoTEdgeLayeredDeploymentBuilder instance per DI</param>
-		public LayeredDeployment(IoTEdgeLayeredDeploymentBuilder ioTEdgeLayeredDeploymentBuilder)
+		/// <param name="ioTEdgeAutomaticDeploymentBuilder">IoTEdgeAutomaticDeploymentBuilder instance per DI</param>
+		public AutomaticDeployment(IoTEdgeAutomaticDeploymentBuilder ioTEdgeAutomaticDeploymentBuilder)
 		{
-			_ioTEdgeLayeredDeploymentBuilder = ioTEdgeLayeredDeploymentBuilder;
+			_ioTEdgeAutomaticDeploymentBuilder = ioTEdgeAutomaticDeploymentBuilder;
 		}
 
 		/// <summary>
-		/// Creates a new layered deployment manifest file.
+		/// Creates a new automatic deployment manifest file.
 		/// </summary>
 		/// <param name="req">Http request</param>
 		/// <returns></returns>
-		[FunctionName("AddLayeredDeployment")]
-		[OpenApiOperation(operationId: "AddLayeredDeployment", tags: new[] { "IoTEdgeLayeredDeployment" })]
+		[FunctionName("AddAutomaticDeployment")]
+		[OpenApiOperation(operationId: "AddAutomaticDeployment", tags: new[] { "IoTEdgeAutomaticDeployment" })]
 		[OpenApiRequestBody(contentType: "application/json", bodyType: typeof(DeploymentFile), Required = true, Description = "Specifies a file name without file extension and content for the deployment manifest")]
 		[OpenApiResponseWithBody(statusCode: HttpStatusCode.OK, contentType: "application/json", bodyType: typeof(string), Description = "The OK response")]
-		public async Task<IActionResult> AddLayeredDeployment(
+		public async Task<IActionResult> AddAutomaticDeployment(
 			[HttpTrigger(AuthorizationLevel.Anonymous, "post", Route = null)] HttpRequest req)
 		{
 			try
@@ -47,7 +47,7 @@ namespace IoTEdgeDeploymentApi
 				var requestBody = await new StreamReader(req.Body).ReadToEndAsync();
 				var data = JsonConvert.DeserializeObject<DeploymentFile>(requestBody);
 
-				await _ioTEdgeLayeredDeploymentBuilder.AddDeployment(data?.FullFileName, data?.FileContent);
+				await _ioTEdgeAutomaticDeploymentBuilder.AddDeployment(data?.FullFileName, data?.FileContent);
 
 				return new OkObjectResult("Succeeded");
 			}
@@ -58,22 +58,22 @@ namespace IoTEdgeDeploymentApi
 		}
 		
 		/// <summary>
-		/// Gets the content of a layered deployment manifest file.
+		/// Gets the content of an automatic deployment manifest file.
 		/// </summary>
 		/// <param name="req">Http request</param>
 		/// <returns></returns>
-		[FunctionName("GetLayeredDeploymentFileContent")]
-		[OpenApiOperation(operationId: "GetLayeredDeploymentFileContent", tags: new[] { "IoTEdgeLayeredDeployment" })]
+		[FunctionName("GetAutomaticDeploymentFileContent")]
+		[OpenApiOperation(operationId: "GetAutomaticDeploymentFileContent", tags: new[] { "IoTEdgeAutomaticDeployment" })]
 		[OpenApiParameter(name: "filePath", In = ParameterLocation.Query, Required = true, Type = typeof(string), Description = "The **filePath** parameter")]		
 		[OpenApiResponseWithBody(statusCode: HttpStatusCode.OK, contentType: "application/json", bodyType: typeof(string), Description = "The OK response")]
-		public async Task<IActionResult> GetLayeredDeploymentFileContent(
+		public async Task<IActionResult> GetAutomaticDeploymentFileContent(
 			[HttpTrigger(AuthorizationLevel.Anonymous, "get", Route = null)] HttpRequest req)
 		{
 			try
 			{
 				var filePath = req.Query["filePath"];
 		
-				var content = await _ioTEdgeLayeredDeploymentBuilder.GetFileContent(filePath);
+				var content = await _ioTEdgeAutomaticDeploymentBuilder.GetFileContent(filePath);
 				
 				return new OkObjectResult(content);
 			}
@@ -82,7 +82,6 @@ namespace IoTEdgeDeploymentApi
 				return new BadRequestErrorMessageResult(ex.Message);
 			}
 		}
-
 	}
 }
 

@@ -3,7 +3,8 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
-using IoTEdgeDeploymentEngine.Tools;
+using IoTEdgeDeploymentEngine.Accessor;
+using IoTEdgeDeploymentEngine.Util;
 using Microsoft.Azure.Devices;
 using Newtonsoft.Json;
 
@@ -12,67 +13,70 @@ using Newtonsoft.Json;
 
 namespace IoTEdgeDeploymentEngine
 {
-	/// <inheritdoc/>
-	public class IoTEdgeLayeredDeploymentBuilder : IIoTEdgeDeploymentBuilder
-	{
-		private const string MANIFEST_DIRECTORY = "./DeploymentFiles/LayeredDeployment";
-		private const string ROUTE_KEY = "route";
+    /// <summary>
+    /// Layered deployment builder that provides methods to create/apply layered deployments
+    /// </summary>
+    public class IoTEdgeLayeredDeploymentBuilder : IoTEdgeDeploymentBuilderBase, IIoTEdgeDeploymentBuilder
+    {
+        private const string LayeredManifestDirectory = "./DeploymentFiles/LayeredDeployment";
+        private readonly IIoTHubAccessor _ioTHubAccessor;
 
-		public IoTEdgeLayeredDeploymentBuilder()
-		{
-			//_logger = logger;
-		}
-		public async Task ApplyDeployments()
-		{
-			var configurations = await GetFileContent();
+        /// <summary>
+        /// ctor
+        /// </summary>
+        public IoTEdgeLayeredDeploymentBuilder(IIoTHubAccessor ioTHubAccessor)
+        {
+            _ioTHubAccessor = ioTHubAccessor;
+            //_logger = logger;
+        }
 
-			var deviceGroups = configurations.GroupBy(c => c.TargetCondition);
-			foreach (var deviceGroup in deviceGroups)
-			{
-				var modules = deviceGroup.SelectMany(c => c.Content.ModulesContent["$edgeAgent"])
-					.Distinct(new KeyValuePairEqualComparer());
-				var mods = deviceGroup.SelectMany(c =>
-						c.Content.ModulesContent.Where(m => m.Key != "$edgeAgent" && m.Key != "$edgeHub"))
-					.Distinct(new KeyValuePairDictionaryEqualComparer());
+        /// <inheritdoc />
+        public async Task ApplyDeployments()
+        {
+            var configurations = await ReadAllFiles(LayeredManifestDirectory);
 
-				var flattenedRoutes = new List<Route>();
-				foreach (var device in deviceGroup)
-				{
-					var desiredPropsString = device.Content.ModulesContent["$edgeHub"]["properties.desired"].ToString();
-					var desiredProps = JsonConvert.DeserializeObject<DeploymentManifest.PropertiesDesiredEdgeHub>(desiredPropsString);
+            var deviceGroups = configurations.GroupBy(c => c.TargetCondition);
+            foreach (var deviceGroup in deviceGroups)
+            {
+                var modulesSpec = GetEdgeAgentModulesSpec(deviceGroup);
+                var edgeAgentDesiredProperties = new EdgeAgentDesiredProperties()
+                {
+                    SystemModuleVersion = "1.3",
+                    RegistryCredentials = GetEdgeAgentSettings(deviceGroup).ToList(),
+                    EdgeModuleSpecifications = modulesSpec
+                };
 
-					foreach (var route in desiredProps.Routes)
-					{
-						if (!flattenedRoutes.Any(f => f.Name == route.Key))
-							flattenedRoutes.Add(new Route(route.Key, route.Value[ROUTE_KEY]));
-					}
-				}
-			}
-		}
+                EdgeHubDesiredProperties edgeHubConfig = new EdgeHubDesiredProperties()
+                {
+                    Routes = GetEdgeHubRoutes(deviceGroup)
+                };
 
-		public async Task AddDeployment(string filePath, string fileContent)
-		{
-			if (!string.IsNullOrEmpty(filePath) && !string.IsNullOrEmpty(fileContent))
-				await File.WriteAllTextAsync(filePath, fileContent);
-			else
-				throw new ArgumentNullException("FileName or FileContent");
-		}
+                var configurationContent = new ConfigurationContent()
+                    .SetEdgeHub(edgeHubConfig)
+                    .SetEdgeAgent(edgeAgentDesiredProperties);
 
-		private async Task<IEnumerable<Configuration>> GetFileContent()
-		{
-			//_logger.LogTrace("Reading layered deployment files");
-			var fileContents = new List<Configuration>();
-			foreach (string file in Directory.EnumerateFiles(MANIFEST_DIRECTORY, "*.json"))
-			{
-				string content = await File.ReadAllTextAsync(file);
-				var config = JsonConvert.DeserializeObject<Configuration>(content);
+                var outerModules = deviceGroup
+                    .SelectMany(c => c.Content.ModulesContent.Where(m => m.Key != "$edgeAgent" && m.Key != "$edgeHub"))
+                    .Distinct(new KeyValuePairDictionaryEqualComparer());
 
-				fileContents.Add(config);
-			}
+                foreach (var outerModule in outerModules)
+                {
+                    if (!outerModule.Value.ContainsKey("properties.desired"))
+                        continue;
 
-			//_logger.LogTrace("Layered deployment files successfully read");
-			return fileContents;
-		}
+                    configurationContent.SetModuleDesiredProperty(new ModuleSpecificationDesiredProperties()
+                    {
+                        Name = outerModule.Key,
+                        DesiredProperties = outerModule.Value["properties.desired"],
+                    });
+                }
 
-	}
+                var deviceIds = await _ioTHubAccessor.GetDeviceIdsByCondition(deviceGroup.Key);
+                foreach (var device in deviceIds)
+                {
+                    await _ioTHubAccessor.ApplyDeploymentPerDevice(device, configurationContent);
+                }
+            }
+        }
+    }
 }

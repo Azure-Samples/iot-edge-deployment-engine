@@ -9,27 +9,27 @@ namespace IoTEdgeDeploymentApi
     /// <summary>
     /// Scheduler function to apply deployments.
     /// </summary>
-    public class LayeredDeploymentScheduler
+    public class AutomaticDeploymentScheduler
     {
-        private readonly IIoTEdgeDeploymentBuilder _ioTEdgeLayeredDeploymentBuilder;
+        private readonly IIoTEdgeDeploymentBuilder _ioTEdgeAutomaticDeploymentBuilder;
 
         /// <summary>
         /// ctor
         /// </summary>
-        /// <param name="ioTEdgeLayeredDeploymentBuilder">IoTEdgeLayeredDeploymentBuilder instance per DI</param>
-        public LayeredDeploymentScheduler(IoTEdgeLayeredDeploymentBuilder ioTEdgeLayeredDeploymentBuilder)
+        /// <param name="ioTEdgeAutomaticDeploymentBuilder">IoTEdgeAutomaticDeploymentBuilder instance per DI</param>
+        public AutomaticDeploymentScheduler(IoTEdgeAutomaticDeploymentBuilder ioTEdgeAutomaticDeploymentBuilder)
         {
-            _ioTEdgeLayeredDeploymentBuilder = ioTEdgeLayeredDeploymentBuilder;
+            _ioTEdgeAutomaticDeploymentBuilder = ioTEdgeAutomaticDeploymentBuilder;
         }
         
         /// <summary>
         /// Timer based function that executes deployments every day at 12:00am
         /// </summary>
         /// <param name="myTimer">Timer object</param>
-        [FunctionName("LayeredDeploymentScheduler")]
+        [FunctionName("AutomaticDeploymentScheduler")]
         public async Task Run([TimerTrigger("0 0 12 * * *", RunOnStartup = false)]TimerInfo myTimer)
         {
-            await _ioTEdgeLayeredDeploymentBuilder.ApplyDeployments();
+            await _ioTEdgeAutomaticDeploymentBuilder.ApplyDeployments();
         }
     }
 }
