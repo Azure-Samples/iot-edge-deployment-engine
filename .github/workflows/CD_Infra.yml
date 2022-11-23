@@ -24,5 +24,5 @@ jobs:
           subscriptionId: ${{ secrets.AZURE_SUBSCRIPTION }}
           scope: resourcegroup
           resourceGroupName: ${{ secrets.AZURE_RG }}
-          template: ./IoTEdgeDeploymentApi/Deployment/azuredeploy.json ioTHubConString=${{ secrets.IOTHUB_CONSTRING }}-overriden storageAccountName=${{ secrets.STORAGEACCOUNT_NAME }}-overriden appInsightsName=${{ secrets.APPINSIGHTS_NAME }}-overriden azureFuncName=${{ secrets.AZUREFUNC_NAME }}-overriden hostingPlanName=${{ secrets.HOSTINGPLAN_NAME }}-overriden
-          parameters: ./IoTEdgeDeploymentApi/Deployment/azuredeploy.parameters.json
+          template: ./IoTEdgeDeploymentApi/Deployment/azuredeploy.json
+          parameters: ./IoTEdgeDeploymentApi/Deployment/azuredeploy.parameters.json ioTHubConString=${{ secrets.IOTHUB_CONSTRING }}-overriden storageAccountName=${{ secrets.STORAGEACCOUNT_NAME }}-overriden appInsightsName=${{ secrets.APPINSIGHTS_NAME }}-overriden azureFuncName=${{ secrets.AZUREFUNC_NAME }}-overriden hostingPlanName=${{ secrets.HOSTINGPLAN_NAME }}-overriden
