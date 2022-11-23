@@ -28,12 +28,22 @@ As well as for layered deployments the configurations are stored on the file sys
 
 ## Azure Functions IoTEdgeDeploymentApi
 
+### Overview
+
+Provides API and scheduler functionalities to manage engine.
+Swagger UI is fully supported and can be opened via http://localhost:7071/api/swagger/ui.
+
 ### LayeredDeployment
 
-Provides an endpoint to submit a new layered deployment manifest to be stored.
+Provides the following endpoints:
+- submit a new layered deployment manifest to be stored
+- retrieve deployment manifest file content by a specified file path
 
 ### AutomaticDeployment
-Provides an endpoint to submit a new automatic deployment manifest to be stored.
+
+Provides the following endpoints:
+- submit a new automatic deployment manifest to be stored
+- retrieve deployment manifest file content by a specified file path
 
 ### LayeredDeploymentScheduler
 
@@ -42,3 +52,20 @@ Executes layered deployment on a timer-based way (default setup: 12:00am)
 ### AutomaticDeploymentScheduler
 
 Executes layered deployment on a timer-based way (default setup: 12:00am)
+
+### How-to
+
+Just paste the IoTHub connection string into the local.settings.json.
+Make sure that your access policy includes "Registry Read|Write" permissions (you can use iothubowner).
+
+## Console application IoTEdgeDeploymentTester
+
+### Overview
+
+A simple app that can test the engine.
+
+### How-to
+
+1. Just paste the IoTHub connection string into the console application properties/run configuration as first argument.
+Make sure that your access policy includes "Registry Read|Write" permissions (you can use iothubowner).
+2. Include additional DI registration and methods calls of your choice into the Program.cs.
