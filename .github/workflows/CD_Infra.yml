@@ -23,8 +23,8 @@ jobs:
         with:
           subscriptionId: ${{ secrets.AZURE_SUBSCRIPTION }}
           resourceGroupName: ${{ secrets.AZURE_RG }}
-          template: /IoTEdgeDeploymentApi/Deployment/azuredeploy.json
-          parameters: /IoTEdgeDeploymentApi/Deployment/azuredeploy.parameters.json
+          template: ./IoTEdgeDeploymentApi/Deployment/azuredeploy.json
+          parameters: ./IoTEdgeDeploymentApi/Deployment/azuredeploy.parameters.json
 
         # output containerName variable from template
       - run: echo ${{ steps.deploy.outputs.containerName }}
