@@ -59,13 +59,11 @@
             "location": "[resourceGroup().location]",
             "kind": "web",
             "tags": {
-                "displayName": "appInsights1 Component for webApp1"
+                "[concat('hidden-link:', resourceGroup().id, '/providers/Microsoft.Web/sites/', parameters('azureFuncName'))]": "Resource",
+                "displayName": "AppInsightsComponent"
             },
-            "dependsOn": [
-                "[resourceId('Microsoft.Web/sites', 'webApp1')]"
-            ],
             "properties": {
-                "applicationId": "webApp1",
+                "applicationId": "[parameters('azureFuncName')]",
                 "application_Type": "web"
             }
         },
