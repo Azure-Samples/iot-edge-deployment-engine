@@ -1,0 +1,18 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentParameters.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "ioTHubConString": {
+            "value": "<ADD IOTHUBCONSTRING HERE>"
+        },
+        "storageAccountName": {
+            "value": "<ADD STORAGEACCOUNTNAME HERE>"
+        },
+        "appInsightsName": {
+            "value": "<ADD APPINSIGHTSNAME HERE>"
+        },
+        "azureFuncName": {
+            "value": "<ADD AZUREFUNCNAME HERE>"
+        }
+    }
+}

@@ -1,0 +1,141 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "ioTHubConString": {
+            "type": "string",
+            "metadata": {
+                "description": "IoTHub connection string"
+            }
+        },
+        "storageAccountName": {
+            "type": "string",
+            "metadata": {
+                "description": "Name of the Storage Account"
+            }
+        },
+        "appInsightsName": {
+            "type": "string",
+            "metadata": {
+                "description": "Name of the AppInsights instance"
+            }
+        },
+        "azureFuncName": {
+            "type": "string",
+            "metadata": {
+                "description": "Name of the Azure Function"
+            }
+        }
+    },
+    "functions": [],
+    "variables": {    "storageAccountId": "[concat(resourceGroup().id,'/providers/','Microsoft.Storage/storageAccounts/', parameters('StorageAccountName'))]"},
+    "resources": [
+        {
+            "name": "[parameters('storageAccountName')]",
+            "type": "Microsoft.Storage/storageAccounts",
+            "apiVersion": "2021-04-01",
+            "location": "[resourceGroup().location]",
+            "kind": "StorageV2",
+            "sku": {
+                "name": "Premium_LRS",
+                "tier": "Premium"
+            },
+            "properties": {
+                "accessTier": "Hot"
+            }
+        },
+        {
+            "name": "[parameters('appInsightsName')]",
+            "type": "Microsoft.Insights/components",
+            "apiVersion": "2020-02-02",
+            "location": "[resourceGroup().location]",
+            "kind": "web",
+            "tags": {
+                "displayName": "appInsights1 Component for webApp1"
+            },
+            "dependsOn": [
+                "[resourceId('Microsoft.Web/sites', 'webApp1')]"
+            ],
+            "properties": {
+                "applicationId": "webApp1",
+                "application_Type": "web"
+            }
+        },
+        {
+            "name": "[concat(parameters('appInsightsName'),'/Basic')]",
+            "type": "microsoft.insights/components/CurrentBillingFeatures",
+            "location": "[resourceGroup().location]",
+            "apiVersion": "2015-05-01",
+            "dependsOn": [
+                "[resourceId('microsoft.insights/components/', parameters('appInsightsName'))]"
+            ],
+            "properties": {
+                "CurrentBillingFeatures": "Basic",
+                "DataVolumeCap": {
+                    "Cap": 20,
+                    "WarningThreshold": 90,
+                    "ResetTime": 23
+                }
+            }
+        },
+        {
+            "name": "[parameters('azureFuncName')]",
+            "type": "Microsoft.Web/sites",
+            "apiVersion": "2020-12-01",
+            "location": "[resourceGroup().location]",
+            "kind": "functionapp",
+            "dependsOn": [
+                "[resourceId('Microsoft.Web/serverfarms', 'serverFarmName')]",
+                "[resourceId('Microsoft.Storage/storageAccounts', 'storageAccountName')]"
+            ],
+            "properties": {
+                "serverFarmId": "[resourceId('Microsoft.Web/serverfarms', 'serverFarmName')]",
+                "siteConfig": {
+                    "appSettings": [
+                        {
+                            "name": "AzureWebJobsDashboard",
+                            "value": "[concat('DefaultEndpointsProtocol=https;AccountName=', 'storageAccountName', ';AccountKey=', listKeys('storageAccountID','2015-05-01-preview').key1)]"
+                        },
+                        {
+                            "name": "AzureWebJobsStorage",
+                            "value": "[concat('DefaultEndpointsProtocol=https;AccountName=', 'storageAccountName', ';AccountKey=', listKeys('storageAccountID','2015-05-01-preview').key1)]"
+                        },
+                        {
+                            "name": "WEBSITE_CONTENTAZUREFILECONNECTIONSTRING",
+                            "value": "[concat('DefaultEndpointsProtocol=https;AccountName=', 'storageAccountName', ';AccountKey=', listKeys('storageAccountID','2015-05-01-preview').key1)]"
+                        },
+                        {
+                            "name": "WEBSITE_CONTENTSHARE",
+                            "value": "[toLower(parameters('azureFuncName'))]"
+                        },
+                        {
+                            "name": "FUNCTIONS_EXTENSION_VERSION",
+                            "value": "~2"
+                        },
+                        {
+                            "name": "APPINSIGHTS_INSTRUMENTATIONKEY",
+                            "value": "[reference(resourceId('microsoft.insights/components/', 'applicationInsightsName'), '2015-05-01').InstrumentationKey]"
+                        },
+                        {
+                            "name": "FUNCTIONS_WORKER_RUNTIME",
+                            "value": "dotnet"
+                        },
+                        {
+                            "name": "OpenApi__DocDescription",
+                            "value": "This Swagger UI includes the endpoint definitions for the IoTEdgeDeploymentApi."
+                        },
+                        {
+                            "name": "OpenApi__DocTitle",
+                            "value": "OpenApi Document for the IoTEdgeDeploymentApi"
+                        },
+                        {
+                            "name": "IoTHubConnectionString",
+                            "value": "[parameters('ioTHubConString')]"
+                        }
+                    ]
+                }
+            }
+        }
+    ],
+    "outputs": {}
+}
