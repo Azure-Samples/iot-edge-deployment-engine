@@ -31,17 +31,19 @@ As well as for layered deployments the configurations are stored on the file sys
 ### Overview
 
 Provides API and scheduler functionalities to manage engine.
-Swagger UI is fully supported and can be opened via http://localhost:7071/api/swagger/ui.
+Swagger UI is fully supported and can be opened via the following [URL][def].
 
 ### LayeredDeployment
 
 Provides the following endpoints:
+
 - submit a new layered deployment manifest to be stored
 - retrieve deployment manifest file content by a specified file path
 
 ### AutomaticDeployment
 
 Provides the following endpoints:
+
 - submit a new automatic deployment manifest to be stored
 - retrieve deployment manifest file content by a specified file path
 
@@ -69,3 +71,20 @@ A simple app that can test the engine.
 1. Just paste the IoTHub connection string into the console application properties/run configuration as first argument.
 Make sure that your access policy includes "Registry Read|Write" permissions (you can use iothubowner).
 2. Include additional DI registration and methods calls of your choice into the Program.cs.
+
+## Deployment
+
+1. use the GitHub Actions [workflow file][def2] and set it up in your fork
+2. just add the following [secrets](https://docs.github.com/en/actions/security-guides/encrypted-secrets#creating-encrypted-secrets-for-a-repository) in your repository settings:
+
+- AZURE_CREDENTIALS --> store the json by following the [instructions](https://learn.microsoft.com/en-us/azure/azure-resource-manager/templates/deploy-github-actions?tabs=userlevel#generate-deployment-credentials) to obtain your subscription credentials
+- AZURE_SUBSCRIPTION --> Azure Subscription id
+- AZURE_RG --> Azure Resource Group name
+- IOTHUB_CONSTRING --> Azure IoTHub connection string
+- STORAGEACCOUNT_NAME --> Azure Storage Account name
+- APPINSIGHTS_NAME --> Azure Application Insights name
+- HOSTINGPLAN_NAME --> Azure App Service Plan name
+- AZUREFUNC_NAME --> Azure Functions name
+
+[def]: http://localhost:7071/api/swagger/ui
+[def2]: /.github/workflows/CD_Infra.yml
