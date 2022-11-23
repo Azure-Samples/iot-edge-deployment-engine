@@ -13,6 +13,9 @@
         },
         "azureFuncName": {
             "value": "<ADD AZUREFUNCNAME HERE>"
+        },
+        "hostingPlanName": {
+            "value": "<ADD HOSTINGPLANNAME HERE>"
         }
     }
 }
