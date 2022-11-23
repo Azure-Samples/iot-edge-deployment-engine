@@ -22,9 +22,7 @@ jobs:
         uses: azure/arm-deploy@v1
         with:
           subscriptionId: ${{ secrets.AZURE_SUBSCRIPTION }}
+          scope: resourcegroup
           resourceGroupName: ${{ secrets.AZURE_RG }}
-          template: ./IoTEdgeDeploymentApi/Deployment/azuredeploy.json
+          template: ./IoTEdgeDeploymentApi/Deployment/azuredeploy.json ioTHubConString=${{ secrets.IOTHUB_CONSTRING }}-overriden storageAccountName=${{ secrets.STORAGEACCOUNT_NAME }}-overriden appInsightsName=${{ secrets.APPINSIGHTS_NAME }}-overriden azureFuncName=${{ secrets.AZUREFUNC_NAME }}-overriden hostingPlanName=${{ secrets.HOSTINGPLAN_NAME }}-overriden
           parameters: ./IoTEdgeDeploymentApi/Deployment/azuredeploy.parameters.json
-
-        # output containerName variable from template
-      - run: echo ${{ steps.deploy.outputs.containerName }}
