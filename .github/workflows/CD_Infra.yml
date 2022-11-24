@@ -1,22 +1,21 @@
 name: Azure ARM
-on: 
+on:
   push:
-    branches: 
+    branches:
       - main
-      
+
 jobs:
-    build-and-deploy:
-      runs-on: ubuntu-latest
-      steps:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    steps:
+      # Checkout code
       - uses: actions/checkout@v2
       - name: Setup .NET
         uses: actions/setup-dotnet@v1
         with:
           dotnet-version: 6.0.x
-        # Checkout code
-      - uses: actions/checkout@main
-
-        # Log into Azure
+      #- uses: actions/checkout@main
+      # Log into Azure
       - uses: azure/login@v1
         with:
           creds: ${{ secrets.AZURE_CREDENTIALS }}
@@ -30,15 +29,14 @@ jobs:
           resourceGroupName: ${{ secrets.AZURE_RG }}
           template: ./IoTEdgeDeploymentApi/Deployment/azuredeploy.json
           parameters: ./IoTEdgeDeploymentApi/Deployment/azuredeploy.parameters.json ioTHubConString=${{ secrets.IOTHUB_CONSTRING }} storageAccountName=${{ secrets.STORAGEACCOUNT_NAME }} appInsightsName=${{ secrets.APPINSIGHTS_NAME }} azureFuncName=${{ secrets.AZUREFUNC_NAME }} hostingPlanName=${{ secrets.HOSTINGPLAN_NAME }}
-      - name: 'Resolve Project Dependencies Using Dotnet'
+      - name: "Resolve Project Dependencies Using Dotnet"
         shell: bash
         run: |
           pushd './.'
           dotnet build --configuration Release --output ./output
           popd
-      - name: 'Run Azure Functions action'
+      - name: "Run Azure Functions action"
         uses: Azure/functions-action@v1
         with:
           app-name: ${{ secrets.AZUREFUNC_NAME }}
-          package: './output'
-          
+          package: "./output"
