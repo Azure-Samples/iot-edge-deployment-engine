@@ -9,8 +9,11 @@ var host = ConfigureServices(args);
 var logger = host.Services.GetRequiredService<ILogger<Program>>();
 logger.LogInformation("Host created.");
 
-var service = host.Services.GetRequiredService<IoTEdgeLayeredDeploymentBuilder>();
-await service.ApplyDeployments();
+var serviceLayered = host.Services.GetRequiredService<IoTEdgeLayeredDeploymentBuilder>();
+await serviceLayered.ApplyDeployments();
+var serviceAutomatic = host.Services.GetRequiredService<IoTEdgeAutomaticDeploymentBuilder>();
+await serviceAutomatic.ApplyDeployments();
+
 
 return;
 

@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
+using IoTEdgeDeploymentEngine.Accessor;
 using IoTEdgeDeploymentEngine.Util;
 using Microsoft.Azure.Devices;
 using Newtonsoft.Json;
@@ -12,10 +13,89 @@ namespace IoTEdgeDeploymentEngine
     /// <summary>
     /// Base class for the deployment engine classes providing common functionalities
     /// </summary>
-    public class IoTEdgeDeploymentBuilderBase
+    public abstract class IoTEdgeDeploymentBuilderBase : IIoTEdgeDeploymentBuilder
     {
         private const string RouteKey = "route";
 
+        private readonly IIoTHubAccessor _ioTHubAccessor;
+
+        /// <summary>
+        /// Returns path for deployment manifest files
+        /// </summary>
+        protected abstract string ManifestDirectory { get; }
+        
+        /// <summary>
+        /// Gets the edgeAgents modules specification from ModulesContent
+        /// </summary>
+        /// <param name="deviceGroup">Set of devices grouped by tags</param>
+        /// <returns></returns>
+        protected abstract IEnumerable<KeyValuePair<string, object>> GetEdgeAgentModules(
+            IGrouping<string, Configuration> deviceGroup);        
+        
+        /// <summary>
+        /// Gets the edgeAgents modules specification from ModulesContent
+        /// </summary>
+        /// <param name="deviceGroup">Set of devices grouped by tags</param>
+        /// <returns></returns>
+        protected abstract IEnumerable<KeyValuePair<string, IDictionary<string, object>>> GetOuterModules(
+            IGrouping<string, Configuration> deviceGroup);
+
+        /// <summary>
+        /// ctor
+        /// </summary>
+        protected IoTEdgeDeploymentBuilderBase(IIoTHubAccessor ioTHubAccessor)
+        {
+            _ioTHubAccessor = ioTHubAccessor;
+            //_logger = logger;
+        }
+
+        /// <inheritdoc />
+        public virtual async Task ApplyDeployments()
+        {
+            var configurations = await ReadAllFiles(ManifestDirectory);
+
+            var deviceGroups = configurations.GroupBy(c => c.TargetCondition);
+            foreach (var deviceGroup in deviceGroups)
+            {
+                var edgeAgentModules = GetEdgeAgentModules(deviceGroup);
+                var modulesSpec = GetEdgeAgentModulesSpec(edgeAgentModules);
+                var edgeAgentDesiredProperties = new EdgeAgentDesiredProperties()
+                {
+                    SystemModuleVersion = "1.3",
+                    RegistryCredentials = GetEdgeAgentSettings(deviceGroup).ToList(),
+                    EdgeModuleSpecifications = modulesSpec
+                };
+
+                EdgeHubDesiredProperties edgeHubConfig = new EdgeHubDesiredProperties()
+                {
+                    Routes = GetEdgeHubRoutes(deviceGroup)
+                };
+
+                var configurationContent = new ConfigurationContent()
+                    .SetEdgeHub(edgeHubConfig)
+                    .SetEdgeAgent(edgeAgentDesiredProperties);
+
+                var outerModules = GetOuterModules(deviceGroup);
+                foreach (var outerModule in outerModules)
+                {
+                    if (!outerModule.Value.ContainsKey("properties.desired"))
+                        continue;
+
+                    configurationContent.SetModuleDesiredProperty(new ModuleSpecificationDesiredProperties()
+                    {
+                        Name = outerModule.Key,
+                        DesiredProperties = outerModule.Value["properties.desired"],
+                    });
+                }
+
+                var deviceIds = await _ioTHubAccessor.GetDeviceIdsByCondition(deviceGroup.Key);
+                foreach (var device in deviceIds)
+                {
+                    await _ioTHubAccessor.ApplyDeploymentPerDevice(device, configurationContent);
+                }
+            }
+        }
+        
         /// <summary>
         /// Adds a deployment to the file system.
         /// </summary>
@@ -36,7 +116,7 @@ namespace IoTEdgeDeploymentEngine
         /// <param name="filePath">File path.</param>
         /// <returns>Dynamic object</returns>
         /// <exception cref="FileNotFoundException">FileNotFoundException</exception>
-        public async Task<dynamic> GetFileContent(string filePath)
+        public virtual async Task<dynamic> GetFileContent(string filePath)
         {
             if (!File.Exists(filePath))
                 throw new FileNotFoundException($"File {filePath} not found.");
@@ -51,7 +131,7 @@ namespace IoTEdgeDeploymentEngine
         /// </summary>
         /// <param name="deviceGroup">Set of devices grouped by tags</param>
         /// <returns></returns>
-        protected List<Route> GetEdgeHubRoutes(IGrouping<string, Configuration> deviceGroup)
+        private List<Route> GetEdgeHubRoutes(IGrouping<string, Configuration> deviceGroup)
         {
             var flattenedRoutes = new List<Route>();
             foreach (var device in deviceGroup)
@@ -76,7 +156,7 @@ namespace IoTEdgeDeploymentEngine
         /// </summary>
         /// <param name="deviceGroup">Set of devices grouped by tags</param>
         /// <returns></returns>
-        protected IEnumerable<RegistryCredential> GetEdgeAgentSettings(IGrouping<string, Configuration> deviceGroup)
+        private IEnumerable<RegistryCredential> GetEdgeAgentSettings(IGrouping<string, Configuration> deviceGroup)
         {
             var edgeAgentModules = deviceGroup.SelectMany(c => c.Content.ModulesContent["$edgeAgent"])
                 .Distinct(new KeyValuePairEqualComparer());
@@ -105,13 +185,10 @@ namespace IoTEdgeDeploymentEngine
         /// <summary>
         /// Reads edgeAgents module specification
         /// </summary>
-        /// <param name="deviceGroup">Set of devices grouped by tags</param>
+        /// <param name="edgeAgentModules">Modules content of edgeAgent Specification</param>
         /// <returns></returns>
-        protected List<EdgeModuleSpecification> GetEdgeAgentModulesSpec(IGrouping<string, Configuration> deviceGroup)
+        private List<EdgeModuleSpecification> GetEdgeAgentModulesSpec(IEnumerable<KeyValuePair<string, object>> edgeAgentModules)
         {
-            var edgeAgentModules = deviceGroup.SelectMany(c => c.Content.ModulesContent["$edgeAgent"])
-                .Distinct(new KeyValuePairEqualComparer());
-
             var modulesSpec = new List<EdgeModuleSpecification>();
             foreach (var edgeAgentModule in edgeAgentModules)
             {
@@ -146,14 +223,14 @@ namespace IoTEdgeDeploymentEngine
 
             return modulesSpec;
         }
-
+        
         /// <summary>
         /// Reads all files and returns their contents in a list of configuration objects
         /// </summary>
         /// <param name="directory">Directory of deployment files</param>
         /// <returns></returns>
         /// <exception cref="FileNotFoundException">FileNotFoundException</exception>
-        protected async Task<IEnumerable<Configuration>> ReadAllFiles(string directory)
+        private async Task<IEnumerable<Configuration>> ReadAllFiles(string directory)
         {
             //_logger.LogTrace("Reading layered deployment files");
             var fileContents = new List<Configuration>();

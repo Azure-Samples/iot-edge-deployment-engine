@@ -15,27 +15,33 @@ namespace IoTEdgeDeploymentEngine
     /// <summary>
     /// Automatic deployment builder that provides methods to create/apply automatic deployments
     /// </summary>
-    public class IoTEdgeAutomaticDeploymentBuilder : IoTEdgeDeploymentBuilderBase, IIoTEdgeDeploymentBuilder
+    public class IoTEdgeAutomaticDeploymentBuilder : IoTEdgeDeploymentBuilderBase
     {
-        private readonly IIoTHubAccessor _ioTHubAccessor;
-        private const string AutomaticManifestDirectory = "./DeploymentFiles/AutomaticDeployment";
-        private const string RouteKey = "route";
+        /// <inheritdoc />
+        protected override string ManifestDirectory => "./DeploymentFiles/AutomaticDeployment"; //todo: add to configuration parameter
 
         /// <summary>
         /// ctor
         /// </summary>
-        public IoTEdgeAutomaticDeploymentBuilder(IIoTHubAccessor ioTHubAccessor)
+        public IoTEdgeAutomaticDeploymentBuilder(IIoTHubAccessor ioTHubAccessor) : base(ioTHubAccessor)
         {
-            _ioTHubAccessor = ioTHubAccessor;
-            //_logger = logger;
         }
 
         /// <inheritdoc />
-        public async Task ApplyDeployments()
+        protected override IEnumerable<KeyValuePair<string, object>> GetEdgeAgentModules(IGrouping<string, Configuration> deviceGroup)
         {
-            //todo: implement
-
-            throw new NotImplementedException();
+            return deviceGroup.OrderByDescending(d => d.Priority).Take(1)
+                .SelectMany(c => c.Content.ModulesContent["$edgeAgent"])
+                .Distinct(new KeyValuePairEqualComparer());
         }
+        
+        /// <inheritdoc />
+        protected override IEnumerable<KeyValuePair<string, IDictionary<string, object>>> GetOuterModules(IGrouping<string, Configuration> deviceGroup)
+        {
+            return deviceGroup.OrderByDescending(d => d.Priority).Take(1)
+                .SelectMany(c => c.Content.ModulesContent.Where(m => m.Key != "$edgeAgent" && m.Key != "$edgeHub"))
+                .Distinct(new KeyValuePairDictionaryEqualComparer());
+        }
+
     }
 }
