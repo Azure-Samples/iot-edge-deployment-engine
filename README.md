@@ -1,4 +1,4 @@
-[![GitHub CI](https://github.com/bindsi/IoTEdgeDeploymentService/actions/workflows/CD_Infra.yml/badge.svg)](https://github.com/bindsi/IoTEdgeDeploymentService/actions/workflows/CD_Infra.yml)
+[![Azure ARM](https://github.com/Bindsi/IoTEdgeDeploymentService/actions/workflows/CD_Infra.yml/badge.svg)](https://github.com/Bindsi/IoTEdgeDeploymentService/actions/workflows/CD_Infra.yml)
 
 # At-scale Deployment
 
