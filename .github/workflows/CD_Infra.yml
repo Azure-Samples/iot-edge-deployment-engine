@@ -39,4 +39,4 @@ jobs:
         uses: Azure/functions-action@v1
         with:
           app-name: ${{ secrets.AZUREFUNC_NAME }}
-          package: "./output"
+          package: "./src/output"
