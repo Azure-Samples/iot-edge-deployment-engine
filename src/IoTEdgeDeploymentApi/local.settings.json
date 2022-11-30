@@ -4,7 +4,7 @@
     "AzureWebJobsStorage": "UseDevelopmentStorage=true",
     "OpenApi__DocDescription": "This Swagger UI includes the endpoint definitions for the IoTEdgeDeploymentApi.",
     "OpenApi__DocTitle": "OpenApi Document for the IoTEdgeDeploymentApi",
-    "IoTHubConnectionString": "<IoTHubConnectionString>",
+    "IoTHubConnectionString": "HostName=IoTHub-Arc.azure-devices.net;SharedAccessKeyName=iothubowner;SharedAccessKey=bZje8BeuYHOVj8B9RNT63gHJQBuboFKSrEj+heheKO4=",
     "FUNCTIONS_WORKER_RUNTIME": "dotnet"
   }
 }
