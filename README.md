@@ -1,3 +1,5 @@
+[![GitHub CI](https://github.com/bindsi/IoTEdgeDeploymentService/actions/workflows/CD_Infra.yml/badge.svg)](https://github.com/bindsi/IoTEdgeDeploymentService/actions/workflows/CD_Infra.yml)
+
 # At-scale Deployment
 
 Azure IoT Edge provides two ways of [deployments](https://learn.microsoft.com/en-us/azure/iot-edge/module-deployment-monitoring?view=iotedge-1.4). 

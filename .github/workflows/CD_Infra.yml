@@ -32,7 +32,7 @@ jobs:
       - name: "Resolve Project Dependencies Using Dotnet"
         shell: bash
         run: |
-          pushd './.'
+          pushd './src/.'
           dotnet build --configuration Release --output ./output
           popd
       - name: "Run Azure Functions action"
