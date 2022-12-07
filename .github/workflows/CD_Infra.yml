@@ -23,28 +23,28 @@ jobs:
         with:
           creds: ${{ secrets.AZURE_CREDENTIALS }}
           enable-AzPSSession: true
-      - name: Azure PowerShell Action
-        uses: Azure/powershell@v1
-        with:
-          # Specify the Az PowerShell script here.
-          inlineScript: |
-            $tenantName="fdpo.onmicrosoft.com"
-            $spName = "IoTEdgeDeploymentEngine10"
-            $replyUri = "https://$spName.azurewebsites.net/.auth/login/aad/callback"
-            $identifierUri = "https://$spName.$tenantName"
-            # Check if App Registration exists
-            $appReg = Get-AzADApplication -DisplayName $spName
-            if ($null -ne $appReg) {
-                return;
-            }
+      # - name: Azure PowerShell Action
+      #   uses: Azure/powershell@v1
+      #   with:
+      #     # Specify the Az PowerShell script here.
+      #     inlineScript: |
+      #       $tenantName="fdpo.onmicrosoft.com"
+      #       $spName = "IoTEdgeDeploymentEngine10"
+      #       $replyUri = "https://$spName.azurewebsites.net/.auth/login/aad/callback"
+      #       $identifierUri = "https://$spName.$tenantName"
+      #       # Check if App Registration exists
+      #       $appReg = Get-AzADApplication -DisplayName $spName
+      #       if ($null -ne $appReg) {
+      #           return;
+      #       }
 
-            $newAppReg = New-AzADApplication -DisplayName $spName -ReplyUrl $replyUri
-            Update-AzADApplication -ObjectId $newAppReg.Id
-            $newSp = New-AzADServicePrincipal -ApplicationId $newAppReg.AppId
-            Update-AzADServicePrincipal -ObjectId $newSp.Id -IdentifierUri $identifierUri
+      #       $newAppReg = New-AzADApplication -DisplayName $spName -ReplyUrl $replyUri
+      #       Update-AzADApplication -ObjectId $newAppReg.Id
+      #       $newSp = New-AzADServicePrincipal -ApplicationId $newAppReg.AppId
+      #       Update-AzADServicePrincipal -ObjectId $newSp.Id -IdentifierUri $identifierUri
 
-            "appId=$newAppReg.AppId" >> $GITHUB_ENV
-          azPSVersion: latest
+      #       "appId=$newAppReg.AppId" >> $GITHUB_ENV
+      #     azPSVersion: latest
         # Deploy ARM template
       - name: Run ARM deploy
         uses: azure/arm-deploy@v1
