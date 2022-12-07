@@ -29,6 +29,7 @@ jobs:
           # Specify the Az PowerShell script here.
           inlineScript: |
             .\deployment\createServicePrincipal.ps1 -tenantName "fdpo.onmicrosoft.com"
+          working-directory: ${{ github.workspace }}
           azPSVersion: latest
         # Deploy ARM template
       - name: Run ARM deploy
