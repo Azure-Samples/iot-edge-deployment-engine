@@ -28,7 +28,22 @@ jobs:
         with:
           # Specify the Az PowerShell script here.
           inlineScript: |
-            & ${{ github.workspace }}/deployment/createServicePrincipal.ps1 -tenantName "fdpo.onmicrosoft.com"
+            $tenantName="fdpo.onmicrosoft.com"
+            $spName = "IoTEdgeDeploymentEngine10"
+            $replyUri = "https://$spName.azurewebsites.net/.auth/login/aad/callback"
+            $identifierUri = "https://$spName.$tenantName"
+            # Check if App Registration exists
+            $appReg = Get-AzADApplication -DisplayName $spName
+            if ($null -ne $appReg) {
+                return;
+            }
+
+            $newAppReg = New-AzADApplication -DisplayName $spName -ReplyUrl $replyUri
+            Update-AzADApplication -ObjectId $newAppReg.Id
+            $newSp = New-AzADServicePrincipal -ApplicationId $newAppReg.AppId
+            Update-AzADServicePrincipal -ObjectId $newSp.Id -IdentifierUri $identifierUri
+
+            "appId=$newAppReg.AppId" >> $GITHUB_ENV
           azPSVersion: latest
         # Deploy ARM template
       - name: Run ARM deploy
