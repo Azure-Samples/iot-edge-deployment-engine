@@ -25,9 +25,8 @@ jobs:
         uses: Azure/powershell@v1
         with:
           # Specify the Az PowerShell script here.
-          # Specify the Az PowerShell script here.
           inlineScript: 
-            ./deployment/createServicePrincipal.ps1 -tenantName "fdpo.onmicrosoft.com"
+            .\deployment\createServicePrincipal.ps1 -tenantName "fdpo.onmicrosoft.com"
           azPSVersion: latest
         # Deploy ARM template
       - name: Run ARM deploy
