@@ -19,6 +19,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "deployment", "deployment", 
 	ProjectSection(SolutionItems) = preProject
 		..\deployment\azuredeploy.json = ..\deployment\azuredeploy.json
 		..\deployment\azuredeploy.parameters.json = ..\deployment\azuredeploy.parameters.json
+		..\deployment\createServicePrincipal.ps1 = ..\deployment\createServicePrincipal.ps1
 	EndProjectSection
 EndProject
 Global
