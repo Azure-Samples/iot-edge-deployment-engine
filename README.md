@@ -67,10 +67,12 @@ Executes layered deployment on a timer-based way (default setup: 12:00am)
 
 #### Setup App Registrations via PowerShell
 
+Since the GitHub Actions service principal that is created in a step below and authenticates the workflow against Azure has not enough permissions to deploy app registrations and admin consent has to be granted for it, the following steps have to be executed manually:
+
 1. Execute Connect-AzAccount -subscriptionId <yourSubscriptionId> -tenantId <yourTenantId> to login to your Azure subscription in your PowerShell session
-1. Execute the [PowerShell script][def3] by specifying the parameters tenantName (e.g. myTenantName.onmicrosoft.com) and app registration name (e.g. IoTEdgeDeploymentEngine)
-2. Execute it again by specifying a different name for the Swagger UI and also for the Postman client (e.g. IoTEdgeDeploymentEnginePostman)
-3. Login to your subscription in the Azure Portal and navigate to the "App Registration" section in Active Directory and do the following modifications for both app registrations:
+2. Execute the [PowerShell script][def3] by specifying the parameters tenantName (e.g. myTenantName.onmicrosoft.com) and app registration name (e.g. IoTEdgeDeploymentEngine)
+3. Execute it again by specifying a different name for the Swagger UI and also for the Postman client (e.g. IoTEdgeDeploymentEnginePostman)
+4. Login to your subscription in the Azure Portal and navigate to the "App Registration" section in Active Directory and do the following modifications for both app registrations:
 
 - open the app registration and go to "Expose an API"
 - add a scope and name it "user_impersonation", also add a displayname and description and save it then
