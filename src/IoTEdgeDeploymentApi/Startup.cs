@@ -1,19 +1,19 @@
-﻿using Microsoft.Azure.Functions.Extensions.DependencyInjection;
-using Microsoft.Azure.WebJobs.Extensions.OpenApi.Core.Abstractions;
-using Microsoft.Azure.WebJobs.Extensions.OpenApi.Core.Configurations;
-using Microsoft.Extensions.DependencyInjection;
-using Microsoft.OpenApi.Models;
-using System;
+﻿using System;
+using IoTEdgeDeploymentApi;
 using IoTEdgeDeploymentEngine;
 using IoTEdgeDeploymentEngine.Accessor;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Azure.Devices;
-using IoTEdgeDeploymentApi.Security;
+using Microsoft.Azure.Functions.Extensions.DependencyInjection;
+using Microsoft.Azure.WebJobs.Extensions.OpenApi.Core.Abstractions;
+using Microsoft.Azure.WebJobs.Extensions.OpenApi.Core.Configurations;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.OpenApi.Models;
 using OpenApiHttpTriggerAuthorization = IoTEdgeDeploymentApi.Security.OpenApiHttpTriggerAuthorization;
 
-[assembly: FunctionsStartup(typeof(MyNamespace.Startup))]
+[assembly: FunctionsStartup(typeof(Startup))]
 
-namespace MyNamespace
+namespace IoTEdgeDeploymentApi
 {
 	/// <inheritdoc />
 	public class Startup : FunctionsStartup
