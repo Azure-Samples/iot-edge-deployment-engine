@@ -22,6 +22,18 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "deployment", "deployment", 
 		..\deployment\createServicePrincipal.ps1 = ..\deployment\createServicePrincipal.ps1
 	EndProjectSection
 EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "postman", "postman", "{45CA2DC0-1EAA-4158-ADA7-7828F2759970}"
+	ProjectSection(SolutionItems) = preProject
+		..\postman\IoTEdgeDeploymentService.postman_collection.json = ..\postman\IoTEdgeDeploymentService.postman_collection.json
+	EndProjectSection
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "images", "images", "{AE409DDB-406D-4856-979B-2755860132B2}"
+	ProjectSection(SolutionItems) = preProject
+		..\images\SPUsers.png = ..\images\SPUsers.png
+		..\images\AppRegScope.png = ..\images\AppRegScope.png
+		..\images\SwaggerUI.png = ..\images\SwaggerUI.png
+	EndProjectSection
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU

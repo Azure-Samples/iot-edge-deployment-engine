@@ -6,7 +6,10 @@ using Microsoft.OpenApi.Models;
 using System;
 using IoTEdgeDeploymentEngine;
 using IoTEdgeDeploymentEngine.Accessor;
+using Microsoft.AspNetCore.Http;
 using Microsoft.Azure.Devices;
+using IoTEdgeDeploymentApi.Security;
+using OpenApiHttpTriggerAuthorization = IoTEdgeDeploymentApi.Security.OpenApiHttpTriggerAuthorization;
 
 [assembly: FunctionsStartup(typeof(MyNamespace.Startup))]
 
@@ -25,6 +28,14 @@ namespace MyNamespace
 				.AddScoped<IoTEdgeLayeredDeploymentBuilder, IoTEdgeLayeredDeploymentBuilder>()
 				.AddScoped<IoTEdgeAutomaticDeploymentBuilder, IoTEdgeAutomaticDeploymentBuilder>()
 				.AddSingleton<IIoTHubAccessor, IoTHubAccessor>()
+				.AddHttpContextAccessor()
+				.AddSingleton<IOpenApiHttpTriggerAuthorization>(p =>
+				{
+					var accessor = p.GetService<IHttpContextAccessor>();
+					var auth = new OpenApiHttpTriggerAuthorization() { HttpContextAccessor = accessor };
+
+					return auth;
+				})
 				.AddSingleton<IOpenApiConfigurationOptions>(_ =>
 				{
 					var options = new OpenApiConfigurationOptions()

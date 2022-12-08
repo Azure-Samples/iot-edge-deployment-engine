@@ -16,6 +16,12 @@
         },
         "hostingPlanName": {
             "value": "<ADD HOSTINGPLANNAME HERE>"
+        },
+        "tenantId": {
+            "value": "<AAD TENANTID HERE>"
+        },
+        "appId": {
+            "value": "<ADD APPID HERE>"
         }
     }
 }

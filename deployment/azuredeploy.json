@@ -29,7 +29,19 @@
         "hostingPlanName": {
             "type": "string",
             "metadata": {
-                "description": "Name of the Azure Function"
+                "description": "Name of the App Service Plan"
+            }
+        },
+        "tenantId": {
+            "type": "string",
+            "metadata": {
+                "description": "Id of the AAD Tenant"
+            }
+        },
+        "appId": {
+            "type": "string",
+            "metadata": {
+                "description": "Id of the App Registration"
             }
         }
     },
@@ -132,9 +144,9 @@
                             "azureActiveDirectory": {
                                 "enabled": true,
                                 "registration": {
-                                    "clientId": "cf3318bc-03b3-47ab-9bb3-709437ca4693",
+                                    "clientId": "[parameters('appId')]",
                                     "clientSecretSettingName": "MICROSOFT_PROVIDER_AUTHENTICATION_SECRET",
-                                    "openIdIssuer": "https://sts.windows.net/16b3c013-d300-468d-ac64-7eda0820b6d3/v2.0"
+                                    "openIdIssuer": "[concat('https://sts.windows.net/', parameters('tenantId'),'/v2.0')]"
                                 },
                                 "validation": {
                                     "allowedAudiences": [ "api://cf3318bc-03b3-47ab-9bb3-709437ca4693" ]
