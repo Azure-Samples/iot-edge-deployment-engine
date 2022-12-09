@@ -29,7 +29,19 @@
         "hostingPlanName": {
             "type": "string",
             "metadata": {
-                "description": "Name of the Azure Function"
+                "description": "Name of the App Service Plan"
+            }
+        },
+        "tenantId": {
+            "type": "string",
+            "metadata": {
+                "description": "Id of the AAD Tenant"
+            }
+        },
+        "appId": {
+            "type": "string",
+            "metadata": {
+                "description": "Id of the App Registration"
             }
         }
     },
@@ -115,6 +127,37 @@
             "dependsOn": [
                 "[resourceId('Microsoft.Web/serverfarms', parameters('hostingPlanName'))]",
                 "[resourceId('Microsoft.Storage/storageAccounts', parameters('storageAccountName'))]"
+            ],
+            "resources": [
+                {
+                    "type": "Microsoft.Web/sites/config",
+                    "apiVersion": "2022-03-01",
+                    "name": "[concat(parameters('azureFuncName'), '/authsettingsV2')]",
+                    "dependsOn": [ "[resourceId('Microsoft.Web/sites', parameters('azureFuncName'))]" ],
+                    "kind": "string",
+                    "properties": {
+                        "globalValidation": {
+                            "requireAuthentication": true,
+                            "unauthenticatedClientAction": "Return403"
+                        },
+                        "identityProviders": {
+                            "azureActiveDirectory": {
+                                "enabled": true,
+                                "registration": {
+                                    "clientId": "[parameters('appId')]",
+                                    "clientSecretSettingName": "MICROSOFT_PROVIDER_AUTHENTICATION_SECRET",
+                                    "openIdIssuer": "[concat('https://sts.windows.net/', parameters('tenantId'),'/v2.0')]"
+                                },
+                                "validation": {
+                                    "allowedAudiences": [ "api://cf3318bc-03b3-47ab-9bb3-709437ca4693" ]
+                                }
+                            }
+                        },
+                        "tokenStore": {
+                            "enabled": true
+                        }
+                    }
+                }
             ],
             "properties": {
                 "serverFarmId": "[resourceId('Microsoft.Web/serverfarms', parameters('hostingPlanName'))]",

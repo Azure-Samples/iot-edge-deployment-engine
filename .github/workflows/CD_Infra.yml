@@ -19,7 +19,7 @@ jobs:
       - uses: azure/login@v1
         with:
           creds: ${{ secrets.AZURE_CREDENTIALS }}
-
+          enable-AzPSSession: true
         # Deploy ARM template
       - name: Run ARM deploy
         uses: azure/arm-deploy@v1
@@ -28,7 +28,7 @@ jobs:
           scope: resourcegroup
           resourceGroupName: ${{ secrets.AZURE_RG }}
           template: ./deployment/azuredeploy.json
-          parameters: ./deployment/azuredeploy.parameters.json ioTHubConString=${{ secrets.IOTHUB_CONSTRING }} storageAccountName=${{ secrets.STORAGEACCOUNT_NAME }} appInsightsName=${{ secrets.APPINSIGHTS_NAME }} azureFuncName=${{ secrets.AZUREFUNC_NAME }} hostingPlanName=${{ secrets.HOSTINGPLAN_NAME }}
+          parameters: ./deployment/azuredeploy.parameters.json ioTHubConString=${{ secrets.IOTHUB_CONSTRING }} storageAccountName=${{ secrets.STORAGEACCOUNT_NAME }} appInsightsName=${{ secrets.APPINSIGHTS_NAME }} azureFuncName=${{ secrets.AZUREFUNC_NAME }} hostingPlanName=${{ secrets.HOSTINGPLAN_NAME }} tenantId=${{ secrets.TENANT_ID }} appId=${{ secrets.APP_ID }}
       - name: "Resolve Project Dependencies Using Dotnet"
         shell: bash
         run: |

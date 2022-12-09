@@ -350,5 +350,8 @@ MigrationBackup/
 .ionide/
 .vscode/
 
+# Rider files
+.idea/
+
 local.settings.json
 
