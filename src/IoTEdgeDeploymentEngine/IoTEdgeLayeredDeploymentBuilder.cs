@@ -4,6 +4,7 @@ using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
 using IoTEdgeDeploymentEngine.Accessor;
+using IoTEdgeDeploymentEngine.Config;
 using IoTEdgeDeploymentEngine.Util;
 using Microsoft.Azure.Devices;
 using Newtonsoft.Json;
@@ -21,12 +22,12 @@ namespace IoTEdgeDeploymentEngine
         /// <summary>
         /// ctor
         /// </summary>
-        public IoTEdgeLayeredDeploymentBuilder(IIoTHubAccessor ioTHubAccessor) : base(ioTHubAccessor)
+        public IoTEdgeLayeredDeploymentBuilder(IIoTHubAccessor ioTHubAccessor, ManifestConfigLayered manifestConfig) : base(ioTHubAccessor, manifestConfig)
         {
         }
 
-        /// <inheritdoc />
-        protected override string ManifestDirectory => "./DeploymentFiles/LayeredDeployment"; //todo: add to configuration parameter
+        // /// <inheritdoc />
+        // protected override string ManifestDirectory => "./DeploymentFiles/LayeredDeployment"; //todo: add to configuration parameter
 
         /// <inheritdoc />
         protected override IEnumerable<KeyValuePair<string, object>> GetEdgeAgentModules(IGrouping<string, Configuration> deviceGroup)

@@ -2,10 +2,10 @@
     "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
     "contentVersion": "1.0.0.0",
     "parameters": {
-        "ioTHubConString": {
+        "iothubHostname": {
             "type": "string",
             "metadata": {
-                "description": "IoTHub connection string"
+                "description": "IoT Hub host name in form of youriothubazure-devices.net"
             }
         },
         "storageAccountName": {
@@ -42,6 +42,12 @@
             "type": "string",
             "metadata": {
                 "description": "Id of the App Registration"
+            }
+        },
+        "manifestsRootFolder": {
+            "type": "string",
+            "metadata": {
+                "description": "Root folder on disk where the manifests are stored in the Azure Function hosting"
             }
         }
     },
@@ -124,6 +130,9 @@
             "apiVersion": "2020-12-01",
             "location": "[resourceGroup().location]",
             "kind": "functionapp",
+            "identity": {
+                "type": "SystemAssigned"
+            },
             "dependsOn": [
                 "[resourceId('Microsoft.Web/serverfarms', parameters('hostingPlanName'))]",
                 "[resourceId('Microsoft.Storage/storageAccounts', parameters('storageAccountName'))]"
@@ -188,8 +197,12 @@
                             "value": "OpenApi Document for the IoTEdgeDeploymentApi"
                         },
                         {
-                            "name": "IoTHubConnectionString",
-                            "value": "[parameters('ioTHubConString')]"
+                            "name": "IOTHUB_HOSTNAME",
+                            "value": "[parameters('iothubHostname')]"
+                        },
+                        {
+                            "name": "ROOT_MANIFESTS_FOLDER",
+                            "value": "[parameters('manifestsRootFolder')]"
                         }
                     ]
                 }

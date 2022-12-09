@@ -4,6 +4,7 @@ using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
 using IoTEdgeDeploymentEngine.Accessor;
+using IoTEdgeDeploymentEngine.Config;
 using IoTEdgeDeploymentEngine.Util;
 using Microsoft.Azure.Devices;
 using Newtonsoft.Json;
@@ -18,11 +19,12 @@ namespace IoTEdgeDeploymentEngine
         private const string RouteKey = "route";
 
         private readonly IIoTHubAccessor _ioTHubAccessor;
+        private readonly IManifestConfig _manifestConfig;
 
-        /// <summary>
-        /// Returns path for deployment manifest files
-        /// </summary>
-        protected abstract string ManifestDirectory { get; }
+        // / <summary>
+        // / Returns path for deployment manifest files
+        // / </summary>
+        // protected abstract string ManifestDirectory { get; }
         
         /// <summary>
         /// Gets the edgeAgents modules specification from ModulesContent
@@ -43,16 +45,17 @@ namespace IoTEdgeDeploymentEngine
         /// <summary>
         /// ctor
         /// </summary>
-        protected IoTEdgeDeploymentBuilderBase(IIoTHubAccessor ioTHubAccessor)
+        protected IoTEdgeDeploymentBuilderBase(IIoTHubAccessor ioTHubAccessor, IManifestConfig manifestConfig)
         {
             _ioTHubAccessor = ioTHubAccessor;
+            _manifestConfig = manifestConfig;
             //_logger = logger;
         }
 
         /// <inheritdoc />
         public virtual async Task ApplyDeployments()
         {
-            var configurations = await ReadAllFiles(ManifestDirectory);
+            var configurations = await ReadAllFiles(_manifestConfig.DirectoryRoot);
 
             var deviceGroups = configurations.GroupBy(c => c.TargetCondition);
             foreach (var deviceGroup in deviceGroups)
@@ -99,29 +102,33 @@ namespace IoTEdgeDeploymentEngine
         /// <summary>
         /// Adds a deployment to the file system.
         /// </summary>
-        /// <param name="filePath">Deployment full file path</param>
+        /// <param name="fileName">Deployment file name</param>
         /// <param name="fileContent">Deployment manifest JSON string</param>
         /// <exception cref="ArgumentNullException">ArgumentNullException</exception>
-        public virtual async Task AddDeployment(string filePath, string fileContent)
+        public virtual async Task AddDeployment(string fileName, string fileContent)
         {
-            if (!string.IsNullOrEmpty(filePath) && !string.IsNullOrEmpty(fileContent))
-                await File.WriteAllTextAsync(filePath, fileContent);
+            if (!string.IsNullOrEmpty(fileName) && !string.IsNullOrEmpty(fileContent))
+            {
+                var fileLocation = Path.Combine(_manifestConfig.DirectoryRoot, fileName);
+                await File.WriteAllTextAsync(fileLocation, fileContent);
+            }
             else
                 throw new ArgumentNullException("FileName or FileContent");
         }
-        
+
         /// <summary>
         /// Gets content of a single file.
         /// </summary>
-        /// <param name="filePath">File path.</param>
+        /// <param name="fileName">Relative file path, name of the file with extension.</param>
         /// <returns>Dynamic object</returns>
         /// <exception cref="FileNotFoundException">FileNotFoundException</exception>
-        public virtual async Task<dynamic> GetFileContent(string filePath)
+        public virtual async Task<dynamic> GetFileContent(string fileName)
         {
-            if (!File.Exists(filePath))
-                throw new FileNotFoundException($"File {filePath} not found.");
+            var fileLocation = Path.Combine(_manifestConfig.DirectoryRoot, fileName);
+            if (!File.Exists(fileLocation))
+                throw new FileNotFoundException($"File {fileLocation} not found.");
             
-            var content = await File.ReadAllTextAsync(filePath);
+            var content = await File.ReadAllTextAsync(fileLocation);
 
             return JsonConvert.DeserializeObject<dynamic>(content);
         }

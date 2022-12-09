@@ -348,10 +348,25 @@ MigrationBackup/
 
 # Ionide (cross platform F# VS Code tools) working folder
 .ionide/
-.vscode/
 
 # Rider files
 .idea/
 
+# Local dev settings files
 local.settings.json
+.env
+azuredeploy.parameters.temp.json
+/src/IoTEdgeDeploymentTester/Properties/launchSettings.json
 
+# VS Code
+.vscode/
+
+# Azurite
+# https://www.mikestephenson.me/2021/12/28/dealing-with-annoying-azurite-files-when-developing-logic-apps/
+__azurite_db_blob_extent__.json
+__azurite_db_blob__.json
+__azurite_db_queue__.json
+__azurite_db_table__.json
+__azurite_db_queue_extent__.json
+__blobstorage__
+__queuestorage__

@@ -2,9 +2,6 @@
     "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentParameters.json#",
     "contentVersion": "1.0.0.0",
     "parameters": {
-        "ioTHubConString": {
-            "value": "<ADD IOTHUBCONSTRING HERE>"
-        },
         "storageAccountName": {
             "value": "<ADD STORAGEACCOUNTNAME HERE>"
         },
@@ -16,6 +13,12 @@
         },
         "hostingPlanName": {
             "value": "<ADD HOSTINGPLANNAME HERE>"
+        },
+        "manifestsRootFolder": {
+            "value": "D:\\home\\site\\manifests"
+        },
+        "iothubHostname": {
+            "value": "<ADD IOT HUB HOST NAME (<yourhub>.azure-devices.net)>"
         },
         "tenantId": {
             "value": "<AAD TENANTID HERE>"

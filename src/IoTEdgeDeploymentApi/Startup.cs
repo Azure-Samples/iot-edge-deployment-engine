@@ -1,7 +1,9 @@
 ﻿using System;
+using System.IO;
 using IoTEdgeDeploymentApi;
 using IoTEdgeDeploymentEngine;
 using IoTEdgeDeploymentEngine.Accessor;
+using IoTEdgeDeploymentEngine.Config;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Azure.Devices;
 using Microsoft.Azure.Functions.Extensions.DependencyInjection;
@@ -10,6 +12,8 @@ using Microsoft.Azure.WebJobs.Extensions.OpenApi.Core.Configurations;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.OpenApi.Models;
 using OpenApiHttpTriggerAuthorization = IoTEdgeDeploymentApi.Security.OpenApiHttpTriggerAuthorization;
+using Azure.Core;
+using Azure.Identity;
 
 [assembly: FunctionsStartup(typeof(Startup))]
 
@@ -21,13 +25,23 @@ namespace IoTEdgeDeploymentApi
 		/// <inheritdoc />
 		public override void Configure(IFunctionsHostBuilder builder)
 		{
+			var rootDirectory = Environment.GetEnvironmentVariable("ROOT_MANIFESTS_FOLDER");
+			var iotHubHostname = Environment.GetEnvironmentVariable("IOTHUB_HOSTNAME");
+			string rootDirectoryAutomatic = Path.Combine(rootDirectory, "AutomaticDeployment");
+			string rootDirectoryLayered = Path.Combine(rootDirectory, "LayeredDeployment");
+			CreateManifestSubFolders(rootDirectoryAutomatic);
+			CreateManifestSubFolders(rootDirectoryLayered);
+
+			TokenCredential token = new DefaultAzureCredential();
+
 			builder.Services
 				.AddSingleton<RegistryManager>((s) =>
-					RegistryManager.CreateFromConnectionString(
-						Environment.GetEnvironmentVariable("IoTHubConnectionString")))
+					RegistryManager.Create(iotHubHostname, token))
 				.AddScoped<IoTEdgeLayeredDeploymentBuilder, IoTEdgeLayeredDeploymentBuilder>()
 				.AddScoped<IoTEdgeAutomaticDeploymentBuilder, IoTEdgeAutomaticDeploymentBuilder>()
 				.AddSingleton<IIoTHubAccessor, IoTHubAccessor>()
+				.AddSingleton<ManifestConfigAutomatic>(c => new ManifestConfigAutomatic { DirectoryRoot = rootDirectoryAutomatic })
+                .AddSingleton<ManifestConfigLayered>(c => new ManifestConfigLayered { DirectoryRoot = rootDirectoryLayered })
 				.AddHttpContextAccessor()
 				.AddSingleton<IOpenApiHttpTriggerAuthorization>(p =>
 				{
@@ -63,5 +77,13 @@ namespace IoTEdgeDeploymentApi
 					return options;
 				});
 		}
+
+		private void CreateManifestSubFolders(string directory)
+		{
+			if (!Directory.Exists(directory))
+			{ 
+				Directory.CreateDirectory(directory); 
+			}
+        }
 	}
 }

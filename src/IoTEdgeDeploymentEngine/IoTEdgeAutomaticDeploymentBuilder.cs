@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using IoTEdgeDeploymentEngine.Accessor;
+using IoTEdgeDeploymentEngine.Config;
 using IoTEdgeDeploymentEngine.Util;
 using Microsoft.Azure.Devices;
 using Newtonsoft.Json;
@@ -17,13 +18,13 @@ namespace IoTEdgeDeploymentEngine
     /// </summary>
     public class IoTEdgeAutomaticDeploymentBuilder : IoTEdgeDeploymentBuilderBase
     {
-        /// <inheritdoc />
-        protected override string ManifestDirectory => "./DeploymentFiles/AutomaticDeployment"; //todo: add to configuration parameter
+        // /// <inheritdoc />
+        // protected override string ManifestDirectory => "./DeploymentFiles/AutomaticDeployment"; //todo: add to configuration parameter
 
         /// <summary>
         /// ctor
         /// </summary>
-        public IoTEdgeAutomaticDeploymentBuilder(IIoTHubAccessor ioTHubAccessor) : base(ioTHubAccessor)
+        public IoTEdgeAutomaticDeploymentBuilder(IIoTHubAccessor ioTHubAccessor, ManifestConfigAutomatic manifestConfig) : base(ioTHubAccessor, manifestConfig)
         {
         }
 

@@ -51,7 +51,7 @@ namespace IoTEdgeDeploymentApi
 				var requestBody = await new StreamReader(req.Body).ReadToEndAsync();
 				var data = JsonConvert.DeserializeObject<DeploymentFile>(requestBody);
 
-				await _ioTEdgeAutomaticDeploymentBuilder.AddDeployment(data?.FullFileName, data?.FileContent);
+				await _ioTEdgeAutomaticDeploymentBuilder.AddDeployment(data?.FileName, data?.FileContent);
 
 				return new OkObjectResult("Succeeded");
 			}
@@ -68,7 +68,7 @@ namespace IoTEdgeDeploymentApi
 		/// <returns></returns>
 		[FunctionName("GetAutomaticDeploymentFileContent")]
 		[OpenApiOperation(operationId: "GetAutomaticDeploymentFileContent", tags: new[] { "IoTEdgeAutomaticDeployment" })]
-		[OpenApiParameter(name: "filePath", In = ParameterLocation.Query, Required = true, Type = typeof(string), Description = "The **filePath** parameter")]		
+		[OpenApiParameter(name: "fileName", In = ParameterLocation.Query, Required = true, Type = typeof(string), Description = "The **fileName** parameter")]		
 		[OpenApiResponseWithBody(statusCode: HttpStatusCode.OK, contentType: "application/json", bodyType: typeof(string), Description = "The OK response")]
 		[OpenApiSecurity("implicit_auth", SecuritySchemeType.OAuth2, Flows = typeof(ImplicitAuthFlow))]
 		[OpenApiSecurity("bearer_auth", SecuritySchemeType.Http, Scheme = OpenApiSecuritySchemeType.Bearer, BearerFormat = "JWT")]
@@ -77,9 +77,9 @@ namespace IoTEdgeDeploymentApi
 		{
 			try
 			{
-				var filePath = req.Query["filePath"];
+				var fileName = req.Query["fileName"];
 		
-				var content = await _ioTEdgeAutomaticDeploymentBuilder.GetFileContent(filePath);
+				var content = await _ioTEdgeAutomaticDeploymentBuilder.GetFileContent(fileName);
 				
 				return new OkObjectResult(content);
 			}
@@ -88,6 +88,20 @@ namespace IoTEdgeDeploymentApi
 				return new BadRequestErrorMessageResult(ex.Message);
 			}
 		}
+
+        /// <summary>
+        /// Applies all automatic deployments - for testing
+        /// </summary>
+        /// <param name="req">Http request</param>
+        /// <returns></returns>
+		[FunctionName("ApplyDeployments")]
+		[OpenApiOperation(operationId: "ApplyDeployments", tags: new[] { "IoTEdgeAutomaticDeployment" })]
+        public async Task<IActionResult> ApplyDeployments(
+			[HttpTrigger(AuthorizationLevel.Anonymous, "post", Route = null)] HttpRequest req)
+        {
+            await _ioTEdgeAutomaticDeploymentBuilder.ApplyDeployments();
+            return new OkObjectResult("Applied");
+        }
 	}
 }
 

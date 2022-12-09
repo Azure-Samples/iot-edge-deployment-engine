@@ -6,9 +6,9 @@
 	public class DeploymentFile
 	{
 		/// <summary>
-		/// Full path and name of the deployment manifest file.
+		/// File name and extension.
 		/// </summary>
-		public string FullFileName { get; set; }
+		public string FileName { get; set; }
 
 		/// <summary>
 		/// File Content of the deployment manifest in JSON string format.
