@@ -39,7 +39,7 @@ Swagger UI is fully supported and can be opened via the following [URL][def].
 
 Azure Functions API is secured by OAuth2 and applied via ARM deployment in GitHub Actions workflow automatically.
 Beforehand, you have to create two app registrations, one for that is referenced by the Azure Function for authentication and one that is used for the Implicit Flow in the Swagger UI provided by the Azure Functions.
-The appId of the first app regestrations needs to be configured as parameter for the ARM template and added to the GitHub secrets (see section below). Note that in parallel a Service Principal (Enterprise Application) is created that manages user specific group memberships and additional settings for login experience etc.
+The appId of the first app registrations needs to be configured as parameter for the ARM template and added to the GitHub secrets (see section below). Note that in parallel a Service Principal (Enterprise Application) is created that manages user specific group memberships and additional settings for login experience etc.
 
 ### LayeredDeployment
 
@@ -70,31 +70,42 @@ Executes layered deployment on a timer-based way (default setup: 12:00am)
 - .NET 6
 - Visual Studio Code or Visual Studio 2022
 - Azure CLI
+- PowerShell 7.0.6 LTS or PowerShell 7.1.3 or higher (on Windows only: Windows PowerShell 5.1 is sufficient)
+- [Az PowerShell][def6]
 - Have an IoT Hub available.
-- Add your own user to the RBAC roles `IoT Hub Registry Contributor` and `IoT Hub Twin Contributor` to the above IoT Hub. This will give your developer account permissions to run the Function and Tester application with Visual Studio (Code) using the Azure credentials.
+- In your IoT Hub, assign your own user to the RBAC roles `IoT Hub Registry Contributor` and `IoT Hub Twin Contributor`. This will give your developer account permissions to run the Function and Tester application with Visual Studio (Code) using the Azure credentials.
 
 #### Setup App Registrations via PowerShell
 
-Since the GitHub Actions service principal that is created in a step below and authenticates the workflow against Azure has not enough permissions to deploy app registrations and admin consent has to be granted for it, the following steps have to be executed manually:
+The following steps need to be executed manually due to limited permissions we will be assigning to a Service Principal to run other parts via GitHub Actions.
 
 1. Execute `Connect-AzAccount -subscriptionId <yourSubscriptionId> -tenantId <yourTenantId>` to login to your Azure subscription in your PowerShell session
-2. Execute the [PowerShell script][def3] by specifying the parameters tenantName (e.g. myTenantName.onmicrosoft.com) and app registration name (e.g. IoTEdgeDeploymentEngine)
+2. Execute the [PowerShell script][def3] by specifying the parameters tenantName (e.g. myTenantName.onmicrosoft.com) and app registration name (e.g. `yourprefixIoTEdgeDeploymentEngine`)
+```powershell
+./deployment/createServicePrincipal.ps1 -tenantName <yourtenant> -spName <yourprefixIoTEdgeDeploymentEngine>
+```
 3. Execute it again by specifying a different name for the Swagger UI and also for the Postman client (e.g. IoTEdgeDeploymentEnginePostman)
-4. Login to your subscription in the Azure Portal and navigate to the "App Registration" section in Active Directory and do the following modifications for both app registrations:
+```powershell
+./deployment/createServicePrincipal.ps1 -tenantName <yourtenant> -spName <yourprefixIoTEdgeDeploymentEnginePostman>
+```
+4. Login to your subscription in the Azure Portal and navigate to the "App Registration" section in Active Directory and do the following modifications for **both app registrations**:
 
 - open the app registration and go to "Expose an API"
-- add a scope and name it "user_impersonation", also add a displayname and description and save it then
+- add a scope and name it "user_impersonation", also add a displayname and description and save
 ![alt text](images/AppRegScope.png "Scope 'user_impersonation'")
-- create a secret in the "Certificates & secrets" blade and store it securely in your credential store or Key Vault instance as it will not be displayed to you again
+- create a client secret in the "Certificates & secrets" blade. The secret is displayed after clicking the Add button, make sure you copy it and store it securely in your credential store or Key Vault instance as it will not be displayed to you again
 - go the "Overview" page and click on the Service Principal link at "Managed application in local directory"
 - navigate to the "Users and groups" section and add users of your choice
 ![alt text](images/SPUsers.png "Add SP´s users")
 
+
 #### Run the Azure Function locally in Visual Studio (Code or full IDE)
 
-1. Create a `local.settings.json` file in the Functions project root `src/IoTEdgeDeploymentApi`. You can copy the initial content from `local.settings.json.template` provided in the repo.
-2. Paste the IoT Hub hostname string into the `local.settings.json`. 
-3. Supply the absolute path to the `./manifests` folder in this repo.
+1. Create a `local.settings.json` file in the Functions project root `src/IoTEdgeDeploymentApi`. You can copy the initial content from `local.settings.json.template` provided in the repo and update the values.
+  - `IOTHUB_HOSTNAME` = IoT Hub host name 
+  - `ROOT_MANIFESTS_FOLDER` = Local absolute path to the `./manifests` folder in this repo.
+  - `OpenApi__Auth__TenantId` = your AAD tenant ID
+  - `OpenApi__Auth__Scope` = the name of the scope you created in Azure AD for the first app registration. Looks something like `https://xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx.fdpo.onmicrosoft.com/user_impersonation`
 4. Run the function with Azure Functions tools v4.
 
 #### Swagger UI
@@ -112,7 +123,7 @@ On the cloud app service you have two options:
 
 ![alt text](images/SwaggerUI.png "Swagger UI")
 
-If you want to add different authentication flows, please read the [open api auth docs](https://github.com/Azure/azure-functions-openapi-extension/blob/8cb58af111928088b4f6c07fdf482f6ee5bdf59d/docs/openapi-auth.md) refer to the [authentication sample repo for Swagger](https://github.com/devkimchi/azure-functions-oauth-authentications-via-swagger-ui).
+If you want to add different authentication flows, please read the [open api auth docs](https://github.com/Azure/azure-functions-openapi-extension/blob/8cb58af111928088b4f6c07fdf482f6ee5bdf59d/docs/openapi-auth.md) and refer to the [authentication sample repo for Swagger](https://github.com/devkimchi/azure-functions-oauth-authentications-via-swagger-ui).
 
 ## Console application IoTEdgeDeploymentTester
 
@@ -136,25 +147,65 @@ A simple app that can test the engine.
 
 ## Deployment in Azure
 
+You have two options for provisioning Azure resources and deploying the function code: automated through GitHub Actions, or by using a developer machine with AZ CLI and Visual Studio Code.
+
+### Through GitHub Actions
+
 1. Use the GitHub Actions [workflow file][def2] and set it up in your fork
-2. Add the following [secrets](https://docs.github.com/en/actions/security-guides/encrypted-secrets#creating-encrypted-secrets-for-a-repository) in your repository settings:
+2. Create a new resource group
+```
+az group create -n <name> --location <location>
+```
+3. Add the following [secrets](https://docs.github.com/en/actions/security-guides/encrypted-secrets#creating-encrypted-secrets-for-a-repository) in your repository settings:
 
-- AZURE_CREDENTIALS --> store the json by following the [instructions](https://learn.microsoft.com/en-us/azure/azure-resource-manager/templates/deploy-github-actions?tabs=userlevel#generate-deployment-credentials) to obtain your subscription credentials
-- AZURE_SUBSCRIPTION --> Azure Subscription id
-- AZURE_RG --> Azure Resource Group name you created in step 2
-- IOTHUB_HOSTNAME --> Azure IoTHub connection string with Registry Read and Write permissions (existing IoT Hub)
-- STORAGEACCOUNT_NAME --> Azure Storage Account name that will be created
-- APPINSIGHTS_NAME --> Azure Application Insights name that will be created
-- HOSTINGPLAN_NAME --> Azure App Service Plan name that will be created
-- AZUREFUNC_NAME --> Azure Functions name that will be created
-- MANIFESTS_FOLDER --> Root folder on the Functions app where manifests will be located. We recommend you choose `D:\\home\\site\\manifests`
-- TENANT_ID --> Id of the AAD Tenant
-- APP_ID --> Id (ClientId) of the App Registration reflecting Azure Functions (App Service) and created in step above among **Securitiy** section
+- `AZURE_CREDENTIALS` --> store the json by following the [instructions](https://learn.microsoft.com/en-us/azure/azure-resource-manager/templates/deploy-github-actions?tabs=userlevel#generate-deployment-credentials) to obtain your subscription credentials. Provide the resource group name created in step 2 above.
+- `AZURE_SUBSCRIPTION` --> Azure Subscription id
+- `AZURE_RG` --> Azure Resource Group name you created in step 2
+- `IOTHUB_HOSTNAME` --> Azure IoTHub connection string with Registry Read and Write permissions (existing IoT Hub)
+- `STORAGEACCOUNT_NAME` --> Azure Storage Account name that will be created
+- `APPINSIGHTS_NAME` --> Azure Application Insights name that will be created
+- `HOSTINGPLAN_NAME` --> Azure App Service Plan name that will be created
+- `AZUREFUNC_NAME` --> Azure Functions name that will be created, you should use the same name as the first App registration like `<yourprefixIoTEdgeDeploymentEngine>`
+- `TENANT_ID` --> Id of the AAD Tenant
+- `APP_ID` --> Id (ClientId) of the first App Registration in step above among **Securitiy** section
+- ``
 
-4. TODO via ARM? - > Add the Function Managed Identity to IoT Hub roles `IoT Hub Registry Contributor` and `IoT Hub Twin Contributor` so the function can call into the Azure IoT Hub.
+4. The GitHub action will trigger and provision the Azure resources. The last step is to add the Function Managed Identity to IoT Hub roles `IoT Hub Registry Contributor` and `IoT Hub Twin Contributor` so the function can call into the Azure IoT Hub.
+5. 
+
+### From local environment with Azure CLI and Visual Studio Code
+
+1. In your terminal, move into the folder `./deployment`
+2. Create a new resource group
+```
+az group create -n <name> --location <location>
+```
+3. Create a file `azuredeploy.parameters.temp.json` based on the `azuredeploy.parameters.json` file in that directory, the values of the parameters are the same as the above GitHub Actions.
+4. Run the deployment:
+
+```
+az deployment group create --name azuredeploy --resource-group <resource_group_created_above> --template-file azuredeploy.json --parameters azuredeploy.parameters.temp.json
+```
+
+5. Publish the Azure Function found under `./src/IoTEdgeDeploymentApi` through Visual Studio Code or Visual Studio IDE, per your preference.
+6. Add the Function Managed Identity to IoT Hub roles `IoT Hub Registry Contributor` and `IoT Hub Twin Contributor` so the function has permissions to call into the Azure IoT Hub API.
+
+### Testing the Azure Function in the cloud
+
+Go to the deployed Azure Function App and copy the URL.
+In your browser go to `https://<yourfunctionname>.azurewebsites.net/api/swagger/ui/`. You will be redirected to AD authentication. Consent and from there you can use the Swagger to test out the API.
+
+
+<!-- Once the function is deployed, you can test it by calling the endpoint in the Azure Portal, in the Function Overview screen > Functions > choose one of the endpoints > Code + Test > Test/Run > Add Header.
+- Add a header `Authorization`
+- Add a value of `Bearer "<token>"` where `<token>` is the access token you got as described in the Postman section above. 
+
+![Azure Function portal screenshot](images/function-test-run.png)
+-->
 
 [def]: http://localhost:7071/api/swagger/ui
 [def2]: /.github/workflows/CD_Infra.yml
 [def3]: /deployment/createServicePrincipal.ps1
 [def4]: https://docs.github.com/en/actions/security-guides/encrypted-secrets#creating-encrypted-secrets-for-a-repository
 [def5]: /postman/IoTEdgeDeploymentService.postman_collection.json
+[def6]: https://learn.microsoft.com/en-us/powershell/azure/install-az-ps?view=azps-8.3.0

@@ -28,7 +28,7 @@ jobs:
           scope: resourcegroup
           resourceGroupName: ${{ secrets.AZURE_RG }}
           template: ./deployment/azuredeploy.json
-          parameters: ./deployment/azuredeploy.parameters.json iothubHostname=${{ secrets.IOTHUB_HOSTNAME }} storageAccountName=${{ secrets.STORAGEACCOUNT_NAME }} appInsightsName=${{ secrets.APPINSIGHTS_NAME }} azureFuncName=${{ secrets.AZUREFUNC_NAME }} hostingPlanName=${{ secrets.HOSTINGPLAN_NAME }} tenantId=${{ secrets.TENANT_ID }} appId=${{ secrets.APP_ID }} manifestsRootFolder=${{ secrets.MANIFESTS_FOLDER }}
+          parameters: ./deployment/azuredeploy.parameters.json iothubHostname=${{ secrets.IOTHUB_HOSTNAME }} storageAccountName=${{ secrets.STORAGEACCOUNT_NAME }} appInsightsName=${{ secrets.APPINSIGHTS_NAME }} azureFuncName=${{ secrets.AZUREFUNC_NAME }} hostingPlanName=${{ secrets.HOSTINGPLAN_NAME }} tenantId=${{ secrets.TENANT_ID }} appId=${{ secrets.APP_ID }}
       - name: "Resolve Project Dependencies Using Dotnet"
         shell: bash
         run: |

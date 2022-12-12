@@ -46,6 +46,7 @@
         },
         "manifestsRootFolder": {
             "type": "string",
+            "defaultValue": "D:\\home\\site\\manifests",
             "metadata": {
                 "description": "Root folder on disk where the manifests are stored in the Azure Function hosting"
             }
@@ -59,12 +60,11 @@
         {
             "name": "[parameters('storageAccountName')]",
             "type": "Microsoft.Storage/storageAccounts",
-            "apiVersion": "2021-04-01",
+            "apiVersion": "2021-08-01",
             "location": "[resourceGroup().location]",
             "kind": "StorageV2",
             "sku": {
-                "name": "Premium_LRS",
-                "tier": "Premium"
+                "name": "Standard_LRS"
             },
             "properties": {
                 "accessTier": "Hot"
@@ -103,26 +103,15 @@
             }
         },
         {
-            "apiVersion": "2016-09-01",
+            "apiVersion": "2021-03-01",
             "name": "[parameters('hostingPlanName')]",
             "type": "Microsoft.Web/serverfarms",
             "location": "[resourceGroup().location]",
             "sku": {
-                "name": "EP1",
-                "tier": "ElasticPremium",
-                "size": "EP1",
-                "family": "EP",
-                "capacity": 1
+                "name": "Y1",
+                "tier": "Dynamic"
             },
-            "kind": "elastic",
-            "properties": {
-                "name": "[parameters('hostingPlanName')]",
-                "perSiteScaling": false,
-                "reserved": false,
-                "maximumElasticWorkerCount": 32,
-                "targetWorkerCount": 0,
-                "targetWorkerSizeId": 0
-            }
+            "properties": {}
         },
         {
             "name": "[parameters('azureFuncName')]",
@@ -147,23 +136,22 @@
                     "properties": {
                         "globalValidation": {
                             "requireAuthentication": true,
-                            "unauthenticatedClientAction": "Return403"
+                            "unauthenticatedClientAction": "RedirectToLoginPage",
+                            "redirectToProvider": "azureactivedirectory"
                         },
                         "identityProviders": {
                             "azureActiveDirectory": {
                                 "enabled": true,
                                 "registration": {
                                     "clientId": "[parameters('appId')]",
-                                    "clientSecretSettingName": "MICROSOFT_PROVIDER_AUTHENTICATION_SECRET",
                                     "openIdIssuer": "[concat('https://sts.windows.net/', parameters('tenantId'),'/v2.0')]"
-                                },
-                                "validation": {
-                                    "allowedAudiences": [ "api://cf3318bc-03b3-47ab-9bb3-709437ca4693" ]
                                 }
                             }
                         },
-                        "tokenStore": {
-                            "enabled": true
+                        "login": {
+                            "tokenStore": {
+                                "enabled": true
+                            }
                         }
                     }
                 }
@@ -176,6 +164,10 @@
                             "name": "AzureWebJobsStorage",
                             "value": "[concat('DefaultEndpointsProtocol=https;AccountName=', parameters('storageAccountName'), ';AccountKey=', listKeys(variables('storageAccountId'),'2015-05-01-preview').key1)]"
                         },
+                        {
+                        "name": "WEBSITE_CONTENTAZUREFILECONNECTIONSTRING",
+                        "value": "[format('DefaultEndpointsProtocol=https;AccountName={0};EndpointSuffix={1};AccountKey={2}', parameters('storageAccountName'), environment().suffixes.storage, listKeys(resourceId('Microsoft.Storage/storageAccounts', parameters('storageAccountName')), '2021-08-01').keys[0].value)]"
+                        },                        
                         {
                             "name": "FUNCTIONS_EXTENSION_VERSION",
                             "value": "~4"
@@ -195,6 +187,18 @@
                         {
                             "name": "OpenApi__DocTitle",
                             "value": "OpenApi Document for the IoTEdgeDeploymentApi"
+                        },
+                        {
+                            "name": "OpenApi__Auth__TenantId",
+                            "value": "[parameters('tenantId')]"
+                        },
+                        {
+                            "name": "OpenApi__Auth__Scope",
+                            "value": "[concat('https://', parameters('appId'), '.fdpo.onmicrosoft.com/user_impersonation')]"
+                        },
+                        {
+                            "name": "OpenApi__Version",
+                            "value": "v3"
                         },
                         {
                             "name": "IOTHUB_HOSTNAME",

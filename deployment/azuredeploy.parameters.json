@@ -14,9 +14,6 @@
         "hostingPlanName": {
             "value": "<ADD HOSTINGPLANNAME HERE>"
         },
-        "manifestsRootFolder": {
-            "value": "D:\\home\\site\\manifests"
-        },
         "iothubHostname": {
             "value": "<ADD IOT HUB HOST NAME (<yourhub>.azure-devices.net)>"
         },
