@@ -5,6 +5,7 @@ using System.Web.Http;
 using IoTEdgeDeploymentApi.Model;
 using IoTEdgeDeploymentApi.Security;
 using IoTEdgeDeploymentEngine;
+using IoTEdgeDeploymentEngine.Config;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Azure.WebJobs;
@@ -21,15 +22,15 @@ namespace IoTEdgeDeploymentApi
 	/// </summary>
 	public class LayeredDeployment
 	{
-		private readonly IIoTEdgeDeploymentBuilder _ioTEdgeLayeredDeploymentBuilder;
+		private readonly IIoTEdgeDeploymentBuilder _ioTEdgeDeploymentBuilder;
 
 		/// <summary>
 		/// ctor
 		/// </summary>
-		/// <param name="ioTEdgeLayeredDeploymentBuilder">IoTEdgeLayeredDeploymentBuilder instance per DI</param>
-		public LayeredDeployment(IoTEdgeLayeredDeploymentBuilder ioTEdgeLayeredDeploymentBuilder)
+		/// <param name="ioTEdgeDeploymentBuilder">IoTEdgeDeploymentBuilder instance per DI</param>
+		public LayeredDeployment(IIoTEdgeDeploymentBuilder ioTEdgeDeploymentBuilder)
 		{
-			_ioTEdgeLayeredDeploymentBuilder = ioTEdgeLayeredDeploymentBuilder;
+			_ioTEdgeDeploymentBuilder = ioTEdgeDeploymentBuilder;
 		}
 
 		/// <summary>
@@ -39,19 +40,24 @@ namespace IoTEdgeDeploymentApi
 		/// <returns></returns>
 		[FunctionName("AddLayeredDeployment")]
 		[OpenApiOperation(operationId: "AddLayeredDeployment", tags: new[] { "IoTEdgeLayeredDeployment" })]
-		[OpenApiRequestBody(contentType: "application/json", bodyType: typeof(DeploymentFile), Required = true, Description = "Specifies a file name with file extension and content for the deployment manifest")]
-		[OpenApiResponseWithBody(statusCode: HttpStatusCode.OK, contentType: "application/json", bodyType: typeof(string), Description = "The OK response")]
+		[OpenApiRequestBody(contentType: "application/json", bodyType: typeof(DeploymentFile), Required = true,
+			Description = "Specifies a file name with file extension and content for the deployment manifest")]
+		[OpenApiResponseWithBody(statusCode: HttpStatusCode.OK, contentType: "application/json",
+			bodyType: typeof(string), Description = "The OK response")]
 		[OpenApiSecurity("implicit_auth", SecuritySchemeType.OAuth2, Flows = typeof(ImplicitAuthFlow))]
-		[OpenApiSecurity("bearer_auth", SecuritySchemeType.Http, Scheme = OpenApiSecuritySchemeType.Bearer, BearerFormat = "JWT")]
+		[OpenApiSecurity("bearer_auth", SecuritySchemeType.Http, Scheme = OpenApiSecuritySchemeType.Bearer,
+			BearerFormat = "JWT")]
 		public async Task<IActionResult> AddLayeredDeployment(
-			[HttpTrigger(AuthorizationLevel.Anonymous, "post", Route = null)] HttpRequest req)
+			[HttpTrigger(AuthorizationLevel.Anonymous, "post", Route = null)]
+			HttpRequest req)
 		{
 			try
 			{
 				var requestBody = await new StreamReader(req.Body).ReadToEndAsync();
 				var data = JsonConvert.DeserializeObject<DeploymentFile>(requestBody);
 
-				await _ioTEdgeLayeredDeploymentBuilder.AddDeployment(data?.FileName, data?.FileContent);
+				await _ioTEdgeDeploymentBuilder.AddDeployment(data?.FileName, data?.FileContent,
+					DeploymentCategory.LayeredDeployment);
 
 				return new OkObjectResult("Succeeded");
 			}
@@ -60,7 +66,7 @@ namespace IoTEdgeDeploymentApi
 				return new BadRequestErrorMessageResult(ex.Message);
 			}
 		}
-		
+
 		/// <summary>
 		/// Gets the content of a layered deployment manifest file.
 		/// </summary>
@@ -68,19 +74,23 @@ namespace IoTEdgeDeploymentApi
 		/// <returns></returns>
 		[FunctionName("GetLayeredDeploymentFileContent")]
 		[OpenApiOperation(operationId: "GetLayeredDeploymentFileContent", tags: new[] { "IoTEdgeLayeredDeployment" })]
-		[OpenApiParameter(name: "fileName", In = ParameterLocation.Query, Required = true, Type = typeof(string), Description = "The **fileName** parameter")]		
-		[OpenApiResponseWithBody(statusCode: HttpStatusCode.OK, contentType: "application/json", bodyType: typeof(string), Description = "The OK response")]
+		[OpenApiParameter(name: "fileName", In = ParameterLocation.Query, Required = true, Type = typeof(string),
+			Description = "The **fileName** parameter")]
+		[OpenApiResponseWithBody(statusCode: HttpStatusCode.OK, contentType: "application/json",
+			bodyType: typeof(string), Description = "The OK response")]
 		[OpenApiSecurity("implicit_auth", SecuritySchemeType.OAuth2, Flows = typeof(ImplicitAuthFlow))]
-		[OpenApiSecurity("bearer_auth", SecuritySchemeType.Http, Scheme = OpenApiSecuritySchemeType.Bearer, BearerFormat = "JWT")]
+		[OpenApiSecurity("bearer_auth", SecuritySchemeType.Http, Scheme = OpenApiSecuritySchemeType.Bearer,
+			BearerFormat = "JWT")]
 		public async Task<IActionResult> GetLayeredDeploymentFileContent(
-			[HttpTrigger(AuthorizationLevel.Anonymous, "get", Route = null)] HttpRequest req)
+			[HttpTrigger(AuthorizationLevel.Anonymous, "get", Route = null)]
+			HttpRequest req)
 		{
 			try
 			{
 				var fileName = req.Query["fileName"];
-		
-				var content = await _ioTEdgeLayeredDeploymentBuilder.GetFileContent(fileName);
-				
+
+				var content = await _ioTEdgeDeploymentBuilder.GetFileContent(fileName, DeploymentCategory.LayeredDeployment);
+
 				return new OkObjectResult(content);
 			}
 			catch (System.Exception ex)
@@ -88,7 +98,5 @@ namespace IoTEdgeDeploymentApi
 				return new BadRequestErrorMessageResult(ex.Message);
 			}
 		}
-
 	}
 }
-

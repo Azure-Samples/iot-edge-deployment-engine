@@ -15,10 +15,8 @@ var host = ConfigureServices(args);
 var logger = host.Services.GetRequiredService<ILogger<Program>>();
 logger.LogInformation("Host created.");
 
-var serviceLayered = host.Services.GetRequiredService<IoTEdgeLayeredDeploymentBuilder>();
-await serviceLayered.ApplyDeployments();
-var serviceAutomatic = host.Services.GetRequiredService<IoTEdgeAutomaticDeploymentBuilder>();
-await serviceAutomatic.ApplyDeployments();
+var serviceDeployment = host.Services.GetRequiredService<IIoTEdgeDeploymentBuilder>();
+await serviceDeployment.ApplyDeployments();
 
 return;
 
@@ -35,11 +33,13 @@ IHost ConfigureServices(string[] args)
 				TokenCredential tokenCredential = new DefaultAzureCredential();
 				return RegistryManager.Create(iotHubHostName, tokenCredential);
 				})
-                .AddScoped<IoTEdgeLayeredDeploymentBuilder, IoTEdgeLayeredDeploymentBuilder>()
-				.AddScoped<IoTEdgeAutomaticDeploymentBuilder, IoTEdgeAutomaticDeploymentBuilder>()
+				.AddScoped<IIoTEdgeDeploymentBuilder, IoTEdgeDeploymentBuilder>()
 				.AddSingleton<IIoTHubAccessor, IoTHubAccessor>()
-				.AddSingleton<ManifestConfigAutomatic>(c => new ManifestConfigAutomatic { DirectoryRoot = rootDirectoryAutomatic })
-                .AddSingleton<ManifestConfigLayered>(c => new ManifestConfigLayered { DirectoryRoot = rootDirectoryLayered })
+				.AddSingleton<IManifestConfig>(c => new ManifestConfig
+                {
+	                DirectoryRootAutomatic = rootDirectoryAutomatic,
+	                DirectoryRootLayered = rootDirectoryLayered
+                })
                 .AddLogging())
 		.Build();
 }

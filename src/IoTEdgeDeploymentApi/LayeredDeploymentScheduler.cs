@@ -11,15 +11,15 @@ namespace IoTEdgeDeploymentApi
     /// </summary>
     public class LayeredDeploymentScheduler
     {
-        private readonly IIoTEdgeDeploymentBuilder _ioTEdgeLayeredDeploymentBuilder;
+        private readonly IIoTEdgeDeploymentBuilder _ioTEdgeDeploymentBuilder;
 
         /// <summary>
         /// ctor
         /// </summary>
-        /// <param name="ioTEdgeLayeredDeploymentBuilder">IoTEdgeLayeredDeploymentBuilder instance per DI</param>
-        public LayeredDeploymentScheduler(IoTEdgeLayeredDeploymentBuilder ioTEdgeLayeredDeploymentBuilder)
+        /// <param name="ioTEdgeDeploymentBuilder">IoTEdgeDeploymentBuilder instance per DI</param>
+        public LayeredDeploymentScheduler(IIoTEdgeDeploymentBuilder ioTEdgeDeploymentBuilder)
         {
-            _ioTEdgeLayeredDeploymentBuilder = ioTEdgeLayeredDeploymentBuilder;
+            _ioTEdgeDeploymentBuilder = ioTEdgeDeploymentBuilder;
         }
         
         /// <summary>
@@ -29,7 +29,7 @@ namespace IoTEdgeDeploymentApi
         [FunctionName("LayeredDeploymentScheduler")]
         public async Task Run([TimerTrigger("0 0 12 * * *", RunOnStartup = false)]TimerInfo myTimer)
         {
-            await _ioTEdgeLayeredDeploymentBuilder.ApplyDeployments();
+            await _ioTEdgeDeploymentBuilder.ApplyDeployments();
         }
     }
 }

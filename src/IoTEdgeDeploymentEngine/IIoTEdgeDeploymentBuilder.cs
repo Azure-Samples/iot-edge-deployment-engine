@@ -1,4 +1,5 @@
 ﻿using System.Threading.Tasks;
+using IoTEdgeDeploymentEngine.Config;
 
 namespace IoTEdgeDeploymentEngine
 {
@@ -18,14 +19,16 @@ namespace IoTEdgeDeploymentEngine
 		/// </summary>
 		/// <param name="filePath">Deployment full file path</param>
 		/// <param name="fileContent">Deployment manifest JSON string</param>
+		/// <param name="category">Deployment category (automatic, layered)</param>
 		/// <returns></returns>
-		Task AddDeployment(string filePath, string fileContent);
+		Task AddDeployment(string filePath, string fileContent, DeploymentCategory category);
 
 		/// <summary>
 		/// Gets content of a single file.
 		/// </summary>
 		/// <param name="filePath">File path.</param>
+		/// <param name="category">Deployment category (automatic, layered)</param>
 		/// <returns></returns>
-		Task<dynamic> GetFileContent(string filePath);
+		Task<dynamic> GetFileContent(string filePath, DeploymentCategory category);
 	}
 }

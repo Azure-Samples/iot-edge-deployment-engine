@@ -11,15 +11,15 @@ namespace IoTEdgeDeploymentApi
     /// </summary>
     public class AutomaticDeploymentScheduler
     {
-        private readonly IIoTEdgeDeploymentBuilder _ioTEdgeAutomaticDeploymentBuilder;
+        private readonly IIoTEdgeDeploymentBuilder _ioTEdgeDeploymentBuilder;
 
         /// <summary>
         /// ctor
         /// </summary>
-        /// <param name="ioTEdgeAutomaticDeploymentBuilder">IoTEdgeAutomaticDeploymentBuilder instance per DI</param>
-        public AutomaticDeploymentScheduler(IoTEdgeAutomaticDeploymentBuilder ioTEdgeAutomaticDeploymentBuilder)
+        /// <param name="ioTEdgeDeploymentBuilder">IoTEdgeDeploymentBuilder instance per DI</param>
+        public AutomaticDeploymentScheduler(IIoTEdgeDeploymentBuilder ioTEdgeDeploymentBuilder)
         {
-            _ioTEdgeAutomaticDeploymentBuilder = ioTEdgeAutomaticDeploymentBuilder;
+            _ioTEdgeDeploymentBuilder = ioTEdgeDeploymentBuilder;
         }
         
         /// <summary>
@@ -29,7 +29,7 @@ namespace IoTEdgeDeploymentApi
         [FunctionName("AutomaticDeploymentScheduler")]
         public async Task Run([TimerTrigger("0 0 12 * * *", RunOnStartup = false)]TimerInfo myTimer)
         {
-            await _ioTEdgeAutomaticDeploymentBuilder.ApplyDeployments();
+            await _ioTEdgeDeploymentBuilder.ApplyDeployments();
         }
     }
 }

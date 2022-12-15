@@ -37,11 +37,13 @@ namespace IoTEdgeDeploymentApi
 			builder.Services
 				.AddSingleton<RegistryManager>((s) =>
 					RegistryManager.Create(iotHubHostname, token))
-				.AddScoped<IoTEdgeLayeredDeploymentBuilder, IoTEdgeLayeredDeploymentBuilder>()
-				.AddScoped<IoTEdgeAutomaticDeploymentBuilder, IoTEdgeAutomaticDeploymentBuilder>()
+				.AddScoped<IIoTEdgeDeploymentBuilder, IoTEdgeDeploymentBuilder>()
 				.AddSingleton<IIoTHubAccessor, IoTHubAccessor>()
-				.AddSingleton<ManifestConfigAutomatic>(c => new ManifestConfigAutomatic { DirectoryRoot = rootDirectoryAutomatic })
-                .AddSingleton<ManifestConfigLayered>(c => new ManifestConfigLayered { DirectoryRoot = rootDirectoryLayered })
+				.AddSingleton<IManifestConfig>(c => new ManifestConfig
+				{
+					DirectoryRootAutomatic = rootDirectoryAutomatic,
+					DirectoryRootLayered = rootDirectoryLayered
+				})
 				.AddHttpContextAccessor()
 				.AddSingleton<IOpenApiHttpTriggerAuthorization>(p =>
 				{

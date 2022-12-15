@@ -11,8 +11,8 @@ if ($null -ne $appReg) {
 
 # Create App Registration
 $uris = @("https://$spName.azurewebsites.net/.auth/login/aad/callback", `
-        "https://localhost:7071/swagger/oauth2-redirect.html", `
-        "http://localhost:7071/swagger/oauth2-redirect.html", `
+        "https://localhost:7071/api/swagger/oauth2-redirect.html", `
+        "http://localhost:7071/api/swagger/oauth2-redirect.html", `
         "https://$spName.azurewebsites.net/api/swagger/oauth2-redirect.html")
 $newAppReg = New-AzADApplication -DisplayName $spName -ReplyUrls $uris
 

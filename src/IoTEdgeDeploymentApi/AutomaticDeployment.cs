@@ -5,6 +5,7 @@ using System.Web.Http;
 using IoTEdgeDeploymentApi.Model;
 using IoTEdgeDeploymentApi.Security;
 using IoTEdgeDeploymentEngine;
+using IoTEdgeDeploymentEngine.Config;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Azure.WebJobs;
@@ -21,15 +22,15 @@ namespace IoTEdgeDeploymentApi
 	/// </summary>
 	public class AutomaticDeployment
 	{
-		private readonly IIoTEdgeDeploymentBuilder _ioTEdgeAutomaticDeploymentBuilder;
+		private readonly IIoTEdgeDeploymentBuilder _ioTEdgeDeploymentBuilder;
 
 		/// <summary>
 		/// ctor
 		/// </summary>
-		/// <param name="ioTEdgeAutomaticDeploymentBuilder">IoTEdgeAutomaticDeploymentBuilder instance per DI</param>
-		public AutomaticDeployment(IoTEdgeAutomaticDeploymentBuilder ioTEdgeAutomaticDeploymentBuilder)
+		/// <param name="ioTEdgeDeploymentBuilder">IoTEdgeDeploymentBuilder instance per DI</param>
+		public AutomaticDeployment(IIoTEdgeDeploymentBuilder ioTEdgeDeploymentBuilder)
 		{
-			_ioTEdgeAutomaticDeploymentBuilder = ioTEdgeAutomaticDeploymentBuilder;
+			_ioTEdgeDeploymentBuilder = ioTEdgeDeploymentBuilder;
 		}
 
 		/// <summary>
@@ -51,7 +52,7 @@ namespace IoTEdgeDeploymentApi
 				var requestBody = await new StreamReader(req.Body).ReadToEndAsync();
 				var data = JsonConvert.DeserializeObject<DeploymentFile>(requestBody);
 
-				await _ioTEdgeAutomaticDeploymentBuilder.AddDeployment(data?.FileName, data?.FileContent);
+				await _ioTEdgeDeploymentBuilder.AddDeployment(data?.FileName, data?.FileContent, DeploymentCategory.AutomaticDeployment);
 
 				return new OkObjectResult("Succeeded");
 			}
@@ -79,7 +80,7 @@ namespace IoTEdgeDeploymentApi
 			{
 				var fileName = req.Query["fileName"];
 		
-				var content = await _ioTEdgeAutomaticDeploymentBuilder.GetFileContent(fileName);
+				var content = await _ioTEdgeDeploymentBuilder.GetFileContent(fileName, DeploymentCategory.AutomaticDeployment);
 				
 				return new OkObjectResult(content);
 			}
@@ -99,7 +100,7 @@ namespace IoTEdgeDeploymentApi
         public async Task<IActionResult> ApplyDeployments(
 			[HttpTrigger(AuthorizationLevel.Anonymous, "post", Route = null)] HttpRequest req)
         {
-            await _ioTEdgeAutomaticDeploymentBuilder.ApplyDeployments();
+            await _ioTEdgeDeploymentBuilder.ApplyDeployments();
             return new OkObjectResult("Applied");
         }
 	}

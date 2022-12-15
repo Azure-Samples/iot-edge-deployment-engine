@@ -139,7 +139,7 @@ A simple app that can test the engine.
 - Visual Studio Code or Visual Studio 2022
 - Azure CLI
 - Have an IoT Hub available.
-- Add your own user to the RBAC roles `IoT Hub Registry Contributor` and `IoT Hub Twin Contributor` to the above IoT Hub. This will give your developer account permissions to run the Function and Tester application with Visual Studio (Code) using the Azure credentials.
+- Add your own user to the RBAC roles `IoT Hub Registry Contributor`, `IoT Hub Twin Contributor` and `IoT Hub Data Owner` to the above IoT Hub. This will give your developer account permissions to run the Function and Tester application with Visual Studio (Code) using the Azure credentials.
 
 1. Create a `.env` file based on the `.env.template` file in the project folder.
 2. Supply the absolute path to the `./manifests` folder in this repo.
