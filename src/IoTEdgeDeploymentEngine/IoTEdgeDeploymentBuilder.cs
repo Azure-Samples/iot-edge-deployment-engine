@@ -22,11 +22,6 @@ namespace IoTEdgeDeploymentEngine
 		private readonly IManifestConfig _manifestConfig;
 		private readonly ILogger<IoTEdgeDeploymentBuilder> _logger;
 
-		// / <summary>
-		// / Returns path for deployment manifest files
-		// / </summary>
-		// protected abstract string ManifestDirectory { get; }
-
 		/// <summary>
 		/// ctor
 		/// </summary>
@@ -60,8 +55,7 @@ namespace IoTEdgeDeploymentEngine
 		{
 			if (!assignment.Value.Any(a => a.Category == DeploymentCategory.AutomaticDeployment))
 			{
-				//todo: log warning
-				_logger.LogWarning($"ProcessDeviceAssignment - no Automatic deployment found matching device '{assignment.Key}'. Skipping this assignment.");
+				_logger.LogWarning($"ProcessDeviceAssignment - no Automatic (base) deployment found matching device '{assignment.Key}'. Skipping this assignment.");
                 return;
 			}
 
@@ -103,8 +97,17 @@ namespace IoTEdgeDeploymentEngine
 				});
 			}
 
-			await _ioTHubAccessor.ApplyDeploymentPerDevice(assignment.Key, configurationContent);
-		}
+			try 
+			{
+                _logger.LogInformation($"ProcessDeviceAssignment - Applying configuration for device '{assignment.Key}'");
+                await _ioTHubAccessor.ApplyDeploymentPerDevice(assignment.Key, configurationContent);
+            }
+			catch (Exception ex) 
+			{
+				_logger.LogError($"ProcessDeviceAssignment - Error applying deployment to device: {ex.Message}");
+			}
+
+        }
 
 		private async Task<Dictionary<string, List<DeploymentConfig>>> CreateDeviceDeploymentAssignments(Dictionary<string, Configuration> files)
 		{
@@ -171,7 +174,7 @@ namespace IoTEdgeDeploymentEngine
 				: _manifestConfig.DirectoryRootLayered;
 			var fileLocation = Path.Combine(directory, fileName);
 			if (!File.Exists(fileLocation))
-				throw new FileNotFoundException($"File {fileLocation} not found.");
+				throw new FileNotFoundException($"File {fileName} not found.");
 
 			var content = await File.ReadAllTextAsync(fileLocation);
 

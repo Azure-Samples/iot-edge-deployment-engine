@@ -1,5 +1,6 @@
 using System.IO;
 using System.Net;
+using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using System.Web.Http;
 using IoTEdgeDeploymentApi.Model;
@@ -26,11 +27,12 @@ namespace IoTEdgeDeploymentApi
 		private readonly IIoTEdgeDeploymentBuilder _ioTEdgeDeploymentBuilder;
 		private readonly ILogger<AutomaticDeployment> _logger;
 
-		/// <summary>
-		/// ctor
-		/// </summary>
-		/// <param name="ioTEdgeDeploymentBuilder">IoTEdgeDeploymentBuilder instance per DI</param>
-		public AutomaticDeployment(IIoTEdgeDeploymentBuilder ioTEdgeDeploymentBuilder, ILogger<AutomaticDeployment> logger)
+        /// <summary>
+        /// ctor
+        /// </summary>
+        /// <param name="ioTEdgeDeploymentBuilder">IoTEdgeDeploymentBuilder instance per DI</param>
+        /// <param name="logger">ILogger instance per DI</param>
+        public AutomaticDeployment(IIoTEdgeDeploymentBuilder ioTEdgeDeploymentBuilder, ILogger<AutomaticDeployment> logger)
 		{
 			_ioTEdgeDeploymentBuilder = ioTEdgeDeploymentBuilder;
 			_logger = logger;
@@ -83,9 +85,13 @@ namespace IoTEdgeDeploymentApi
 			try
 			{
 				var fileName = req.Query["fileName"];
+				if(!Regex.Match(fileName, @"^[a-z_\-\s0-9\.]+\.(json)$", RegexOptions.IgnoreCase).Success)
+				{
+					_logger.LogError($"GetAutomaticDeploymentFileContent error: fileName is not a valid .json file name");
+                    return new BadRequestErrorMessageResult($"Error: fileName '{fileName}' is not a valid .json file name");
+                }
 		
 				var content = await _ioTEdgeDeploymentBuilder.GetFileContent(fileName, DeploymentCategory.AutomaticDeployment);
-				
 				return new OkObjectResult(content);
 			}
 			catch (System.Exception ex)

@@ -1,5 +1,6 @@
 using System.IO;
 using System.Net;
+using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using System.Web.Http;
 using IoTEdgeDeploymentApi.Model;
@@ -12,6 +13,7 @@ using Microsoft.Azure.WebJobs;
 using Microsoft.Azure.WebJobs.Extensions.Http;
 using Microsoft.Azure.WebJobs.Extensions.OpenApi.Core.Attributes;
 using Microsoft.Azure.WebJobs.Extensions.OpenApi.Core.Enums;
+using Microsoft.Extensions.Logging;
 using Microsoft.OpenApi.Models;
 using Newtonsoft.Json;
 
@@ -23,14 +25,17 @@ namespace IoTEdgeDeploymentApi
 	public class LayeredDeployment
 	{
 		private readonly IIoTEdgeDeploymentBuilder _ioTEdgeDeploymentBuilder;
+		private readonly ILogger<LayeredDeployment> _logger;
 
 		/// <summary>
 		/// ctor
 		/// </summary>
 		/// <param name="ioTEdgeDeploymentBuilder">IoTEdgeDeploymentBuilder instance per DI</param>
-		public LayeredDeployment(IIoTEdgeDeploymentBuilder ioTEdgeDeploymentBuilder)
+		/// <param name="logger">ILogger instance per DI</param>
+		public LayeredDeployment(IIoTEdgeDeploymentBuilder ioTEdgeDeploymentBuilder, ILogger<LayeredDeployment> logger)
 		{
 			_ioTEdgeDeploymentBuilder = ioTEdgeDeploymentBuilder;
+			_logger = logger;
 		}
 
 		/// <summary>
@@ -88,14 +93,19 @@ namespace IoTEdgeDeploymentApi
 			try
 			{
 				var fileName = req.Query["fileName"];
-
+				if(!Regex.Match(fileName, @"^[a-z_\-\s0-9\.]+\.(json)$", RegexOptions.IgnoreCase).Success)
+				{
+					_logger.LogError($"GetLayeredDeploymentFileContent error: fileName is not a valid .json file name");
+                	return new BadRequestErrorMessageResult($"Error: fileName '{fileName}' is not a valid .json file name"); 
+				}
+				
 				var content = await _ioTEdgeDeploymentBuilder.GetFileContent(fileName, DeploymentCategory.LayeredDeployment);
-
 				return new OkObjectResult(content);
 			}
 			catch (System.Exception ex)
 			{
-				return new BadRequestErrorMessageResult(ex.Message);
+                _logger.LogError($"GetLayeredDeploymentFileContent exception: {ex.Message}");
+                return new BadRequestErrorMessageResult(ex.Message);
 			}
 		}
 	}

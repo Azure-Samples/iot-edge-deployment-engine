@@ -26,7 +26,7 @@ Deployment manifest are stored on the file system in the default schema.
 ### Automatic Deployment
 
 Applies the latest relevant deployment manifest per device tag based on the highest priority setting to the devices.
-As well as for layered deployments the configurations are stored on the file system
+As well as for layered deployments the configurations are stored on the file system.
 
 ## Azure Functions IoTEdgeDeploymentApi
 
@@ -55,13 +55,9 @@ Provides the following endpoints:
 - submit a new automatic deployment manifest to be stored
 - retrieve deployment manifest file content by a specified file path
 
-### LayeredDeploymentScheduler
+### DeploymentScheduler
 
-Executes layered deployment on a timer-based way (default setup: 12:00am)
-
-### AutomaticDeploymentScheduler
-
-Executes layered deployment on a timer-based way (default setup: 12:00am)
+Executes an automatic base and any additional layerr into a ingle per device deployment on a timer-based way (default setup: 12:00am)
 
 ### How-to
 
@@ -107,6 +103,7 @@ The following steps need to be executed manually due to limited permissions we w
   - `OpenApi__Auth__TenantId` = your AAD tenant ID
   - `OpenApi__Auth__Scope` = the name of the scope you created in Azure AD for the first app registration. Looks something like `https://xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx.fdpo.onmicrosoft.com/user_impersonation`
 4. Run the function with Azure Functions tools v4.
+5. Test the function by opening the [Swagger UI][def].
 
 #### Swagger UI
 
@@ -171,7 +168,6 @@ az group create -n <name> --location <location>
 - ``
 
 4. The GitHub action will trigger and provision the Azure resources. The last step is to add the Function Managed Identity to IoT Hub roles `IoT Hub Registry Contributor` and `IoT Hub Twin Contributor` so the function can call into the Azure IoT Hub.
-5. 
 
 ### From local environment with Azure CLI and Visual Studio Code
 
@@ -194,14 +190,6 @@ az deployment group create --name azuredeploy --resource-group <resource_group_c
 
 Go to the deployed Azure Function App and copy the URL.
 In your browser go to `https://<yourfunctionname>.azurewebsites.net/api/swagger/ui/`. You will be redirected to AD authentication. Consent and from there you can use the Swagger to test out the API.
-
-
-<!-- Once the function is deployed, you can test it by calling the endpoint in the Azure Portal, in the Function Overview screen > Functions > choose one of the endpoints > Code + Test > Test/Run > Add Header.
-- Add a header `Authorization`
-- Add a value of `Bearer "<token>"` where `<token>` is the access token you got as described in the Postman section above. 
-
-![Azure Function portal screenshot](images/function-test-run.png)
--->
 
 [def]: http://localhost:7071/api/swagger/ui
 [def2]: /.github/workflows/CD_Infra.yml
