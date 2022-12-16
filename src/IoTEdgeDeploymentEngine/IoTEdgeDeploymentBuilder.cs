@@ -8,6 +8,7 @@ using IoTEdgeDeploymentEngine.Config;
 using IoTEdgeDeploymentEngine.Extension;
 using IoTEdgeDeploymentEngine.Util;
 using Microsoft.Azure.Devices;
+using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
 
 namespace IoTEdgeDeploymentEngine
@@ -19,6 +20,7 @@ namespace IoTEdgeDeploymentEngine
 	{
 		private readonly IIoTHubAccessor _ioTHubAccessor;
 		private readonly IManifestConfig _manifestConfig;
+		private readonly ILogger<IoTEdgeDeploymentBuilder> _logger;
 
 		// / <summary>
 		// / Returns path for deployment manifest files
@@ -28,11 +30,11 @@ namespace IoTEdgeDeploymentEngine
 		/// <summary>
 		/// ctor
 		/// </summary>
-		public IoTEdgeDeploymentBuilder(IIoTHubAccessor ioTHubAccessor, IManifestConfig manifestConfig)
+		public IoTEdgeDeploymentBuilder(IIoTHubAccessor ioTHubAccessor, IManifestConfig manifestConfig, ILogger<IoTEdgeDeploymentBuilder> logger)
 		{
 			_ioTHubAccessor = ioTHubAccessor;
 			_manifestConfig = manifestConfig;
-			//_logger = logger;
+			_logger = logger;
 		}
 
 		/// <inheritdoc />
@@ -40,8 +42,9 @@ namespace IoTEdgeDeploymentEngine
 		{
 			var files = await ReadAllFiles(_manifestConfig.DirectoryRootAutomatic,
 				_manifestConfig.DirectoryRootLayered);
+            _logger.LogDebug($"ApplyDeployments - total files in both directories: {files.Count}.");
 
-			var assignments = await CreateDeviceDeploymentAssignments(files);
+            var assignments = await CreateDeviceDeploymentAssignments(files);
 
 			//var deviceGroups = configurations.GroupBy(c => c.TargetCondition);
 			var tasks = new List<Task>();
@@ -49,8 +52,8 @@ namespace IoTEdgeDeploymentEngine
 			{
 				tasks.Add(ProcessDeviceAssignment(assignment));
 			}
-
-			await Task.WhenAll(tasks);
+            
+            await Task.WhenAll(tasks);
 		}
 
 		private async Task ProcessDeviceAssignment(KeyValuePair<string, List<DeploymentConfig>> assignment)
@@ -58,7 +61,8 @@ namespace IoTEdgeDeploymentEngine
 			if (!assignment.Value.Any(a => a.Category == DeploymentCategory.AutomaticDeployment))
 			{
 				//todo: log warning
-				return;
+				_logger.LogWarning($"ProcessDeviceAssignment - no Automatic deployment found matching device '{assignment.Key}'. Skipping this assignment.");
+                return;
 			}
 
 			//https://learn.microsoft.com/en-us/azure/iot-edge/module-deployment-monitoring?view=iotedge-1.4#layered-deployment
@@ -124,7 +128,8 @@ namespace IoTEdgeDeploymentEngine
 					});
 				}
 			}
-
+            _logger.LogDebug($"CreateDeviceDeploymentAssignments - devices matching all target conditions: {assignments.Count}.");
+            
 			return assignments;
 		}
 
@@ -146,7 +151,10 @@ namespace IoTEdgeDeploymentEngine
 				await File.WriteAllTextAsync(fileLocation, fileContent);
 			}
 			else
-				throw new ArgumentNullException("FileName or FileContent");
+			{
+                _logger.LogError($"Error in AddDeployment - number of tasks to run: FileName or FileContent missing.");
+                throw new ArgumentNullException("FileName or FileContent missing");
+			}
 		}
 
 		/// <summary>

@@ -77,7 +77,8 @@ namespace IoTEdgeDeploymentApi
 					};
 
 					return options;
-				});
+				})
+				.AddLogging();
 		}
 
 		private void CreateManifestSubFolders(string directory)

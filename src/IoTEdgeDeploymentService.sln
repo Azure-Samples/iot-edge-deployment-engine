@@ -11,8 +11,8 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "IoTEdgeDeploymentApi", "IoT
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{E69BA53C-80CC-485D-B8EB-11B100F68430}"
 	ProjectSection(SolutionItems) = preProject
-		..\README.md = ..\README.md
 		..\LICENSE = ..\LICENSE
+		..\README.md = ..\README.md
 	EndProjectSection
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "deployment", "deployment", "{B321101D-E447-4B2E-B3D5-58B62441A8E5}"
@@ -29,8 +29,8 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "postman", "postman", "{45CA
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "images", "images", "{AE409DDB-406D-4856-979B-2755860132B2}"
 	ProjectSection(SolutionItems) = preProject
-		..\images\SPUsers.png = ..\images\SPUsers.png
 		..\images\AppRegScope.png = ..\images\AppRegScope.png
+		..\images\SPUsers.png = ..\images\SPUsers.png
 		..\images\SwaggerUI.png = ..\images\SwaggerUI.png
 	EndProjectSection
 EndProject

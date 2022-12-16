@@ -12,6 +12,7 @@ using Microsoft.Azure.WebJobs;
 using Microsoft.Azure.WebJobs.Extensions.Http;
 using Microsoft.Azure.WebJobs.Extensions.OpenApi.Core.Attributes;
 using Microsoft.Azure.WebJobs.Extensions.OpenApi.Core.Enums;
+using Microsoft.Extensions.Logging;
 using Microsoft.OpenApi.Models;
 using Newtonsoft.Json;
 
@@ -23,14 +24,16 @@ namespace IoTEdgeDeploymentApi
 	public class AutomaticDeployment
 	{
 		private readonly IIoTEdgeDeploymentBuilder _ioTEdgeDeploymentBuilder;
+		private readonly ILogger<AutomaticDeployment> _logger;
 
 		/// <summary>
 		/// ctor
 		/// </summary>
 		/// <param name="ioTEdgeDeploymentBuilder">IoTEdgeDeploymentBuilder instance per DI</param>
-		public AutomaticDeployment(IIoTEdgeDeploymentBuilder ioTEdgeDeploymentBuilder)
+		public AutomaticDeployment(IIoTEdgeDeploymentBuilder ioTEdgeDeploymentBuilder, ILogger<AutomaticDeployment> logger)
 		{
 			_ioTEdgeDeploymentBuilder = ioTEdgeDeploymentBuilder;
+			_logger = logger;
 		}
 
 		/// <summary>
@@ -58,7 +61,8 @@ namespace IoTEdgeDeploymentApi
 			}
 			catch (System.Exception ex)
 			{
-				return new BadRequestErrorMessageResult(ex.Message);
+                _logger.LogError($"AddAutomaticDeployment exception: {ex.Message}");
+                return new BadRequestErrorMessageResult(ex.Message);
 			}
 		}
 		
@@ -86,7 +90,8 @@ namespace IoTEdgeDeploymentApi
 			}
 			catch (System.Exception ex)
 			{
-				return new BadRequestErrorMessageResult(ex.Message);
+                _logger.LogError($"GetAutomaticDeploymentFileContent exception: {ex.Message}");
+                return new BadRequestErrorMessageResult(ex.Message);
 			}
 		}
 
@@ -100,8 +105,18 @@ namespace IoTEdgeDeploymentApi
         public async Task<IActionResult> ApplyDeployments(
 			[HttpTrigger(AuthorizationLevel.Anonymous, "post", Route = null)] HttpRequest req)
         {
-            await _ioTEdgeDeploymentBuilder.ApplyDeployments();
-            return new OkObjectResult("Applied");
+			try 
+			{
+                await _ioTEdgeDeploymentBuilder.ApplyDeployments();
+                return new OkObjectResult("Applied");
+            }
+			catch(System.Exception ex)
+			{
+				_logger.LogError($"ApplyDeployments call exception: {ex.Message}");
+				return new BadRequestErrorMessageResult(ex.Message);
+            }
+            
+            
         }
 	}
 }
