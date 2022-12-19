@@ -270,7 +270,7 @@
         {
             "type": "Microsoft.Authorization/roleAssignments",
             "apiVersion": "2022-04-01",
-            "name": "[guid(resourceGroup().id)]",
+            "name": "49d73351-fb1b-491f-96b1-da6145fb9557",
             "dependsOn": [ "[resourceId('Microsoft.Web/sites', variables('azureFuncName'))]" ],
             "properties": {
                 "roleDefinitionId": "[variables('IoTHubDataContributor')]",
@@ -280,7 +280,7 @@
         {
             "type": "Microsoft.Authorization/roleAssignments",
             "apiVersion": "2022-04-01",
-            "name": "[guid(resourceGroup().id)]",
+            "name": "ba628617-6c19-4e1b-a892-a1fd491529d3",
             "dependsOn": [ "[resourceId('Microsoft.Web/sites', variables('azureFuncName'))]" ],
             "properties": {
                 "roleDefinitionId": "[variables('IoTHubRegistryContributor')]",
@@ -290,7 +290,7 @@
         {
             "type": "Microsoft.Authorization/roleAssignments",
             "apiVersion": "2022-04-01",
-            "name": "[guid(resourceGroup().id)]",
+            "name": "730eb609-2502-46fb-9141-5fd7ebc3fd1d",
             "dependsOn": [ "[resourceId('Microsoft.Web/sites', variables('azureFuncName'))]" ],
             "properties": {
                 "roleDefinitionId": "[variables('IoTHubTwinContributor')]",
@@ -300,7 +300,7 @@
         {
             "type": "Microsoft.Authorization/roleAssignments",
             "apiVersion": "2022-04-01",
-            "name": "[guid(resourceGroup().id)]",
+            "name": "a16c08d8-d85b-4035-a8a3-e69116ae51bc",
             "dependsOn": [ "[resourceId('Microsoft.Web/sites', variables('azureFuncName'))]" ],
             "properties": {
                 "roleDefinitionId": "[variables('KeyVaultSecretsUser')]",
