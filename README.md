@@ -2,10 +2,10 @@
 
 # At-scale Deployment
 
-Azure IoT Edge provides two ways of [deployments](https://learn.microsoft.com/en-us/azure/iot-edge/module-deployment-monitoring?view=iotedge-1.4). 
+Azure IoT Edge provides two ways of [deployments](https://learn.microsoft.com/en-us/azure/iot-edge/module-deployment-monitoring?view=iotedge-1.4).
 On the hand you can create a deployment manifest to deploy modules and apply it to one single device.
 On the other hand you can create a deployment manifest with a tag based filter and modules get applied to the registered devices that matches the defined condition.
-The latter one contains automatic deployments where the deployments of the higher priority are only applied to the devices with the same tag(s) 
+The latter one contains automatic deployments where the deployments of the higher priority are only applied to the devices with the same tag(s)
 and layered deployment where modules and routes are consolidated between different deployment definitions for the same devices based by higher priority.
 
 Industries make use of at-scale deployments to define new sets of modules for devices categorized by different keys, e.g. country, region, plant, build etc.
@@ -77,13 +77,17 @@ The following steps need to be executed manually due to limited permissions we w
 
 1. Execute `Connect-AzAccount -subscriptionId <yourSubscriptionId> -tenantId <yourTenantId>` to login to your Azure subscription in your PowerShell session
 2. Execute the [PowerShell script][def3] by specifying the parameters tenantName (e.g. myTenantName.onmicrosoft.com) and app registration name (e.g. `yourprefixIoTEdgeDeploymentEngine`)
+
 ```powershell
 ./deployment/createServicePrincipal.ps1 -tenantName <yourtenant> -spName <yourprefixIoTEdgeDeploymentEngine>
 ```
+
 3. Execute it again by specifying a different name for the Swagger UI and also for the Postman client (e.g. IoTEdgeDeploymentEnginePostman)
+
 ```powershell
 ./deployment/createServicePrincipal.ps1 -tenantName <yourtenant> -spName <yourprefixIoTEdgeDeploymentEnginePostman>
 ```
+
 4. Login to your subscription in the Azure Portal and navigate to the "App Registration" section in Active Directory and do the following modifications for **both app registrations**:
 
 - open the app registration and go to "Expose an API"
@@ -94,14 +98,15 @@ The following steps need to be executed manually due to limited permissions we w
 - navigate to the "Users and groups" section and add users of your choice
 ![alt text](images/SPUsers.png "Add SP´s users")
 
-
 #### Run the Azure Function locally in Visual Studio (Code or full IDE)
 
 1. Create a `local.settings.json` file in the Functions project root `src/IoTEdgeDeploymentApi`. You can copy the initial content from `local.settings.json.template` provided in the repo and update the values.
-  - `IOTHUB_HOSTNAME` = IoT Hub host name 
-  - `ROOT_MANIFESTS_FOLDER` = Local absolute path to the `./manifests` folder in this repo.
-  - `OpenApi__Auth__TenantId` = your AAD tenant ID
-  - `OpenApi__Auth__Scope` = the name of the scope you created in Azure AD for the first app registration. Looks something like `https://xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx.fdpo.onmicrosoft.com/user_impersonation`
+
+- `IOTHUB_HOSTNAME` = IoT Hub host name
+- `ROOT_MANIFESTS_FOLDER` = Local absolute path to the `./manifests` folder in this repo.
+- `OpenApi__Auth__TenantId` = your AAD tenant ID
+- `OpenApi__Auth__Scope` = the name of the scope you created in Azure AD for the first app registration. Looks something like `https://xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx.fdpo.onmicrosoft.com/user_impersonation`
+
 4. Run the function with Azure Functions tools v4.
 5. Test the function by opening the [Swagger UI][def].
 
@@ -150,9 +155,11 @@ You have two options for provisioning Azure resources and deploying the function
 
 1. Use the GitHub Actions [workflow file][def2] and set it up in your fork
 2. Create a new resource group
-```
-az group create -n <name> --location <location>
-```
+
+  ```CLI
+  az group create -n <name> --location <location>
+  ```
+
 3. Add the following [secrets](https://docs.github.com/en/actions/security-guides/encrypted-secrets#creating-encrypted-secrets-for-a-repository) in your repository settings:
 
 - `AZURE_CREDENTIALS` --> store the json by following the [instructions](https://learn.microsoft.com/en-us/azure/azure-resource-manager/templates/deploy-github-actions?tabs=userlevel#generate-deployment-credentials) to obtain your subscription credentials. Provide the resource group name created in step 2 above.
@@ -169,15 +176,17 @@ az group create -n <name> --location <location>
 
 1. In your terminal, move into the folder `./deployment`
 2. Create a new resource group
-```
-az group create -n <name> --location <location>
-```
+
+  ```CLI
+  az group create -n <name> --location <location>
+  ```
+
 3. Create a file `azuredeploy.parameters.temp.json` based on the `azuredeploy.parameters.json` file in that directory, the values of the parameters are the same as the above GitHub Actions.
 4. Run the deployment:
 
-```
-az deployment group create --name azuredeploy --resource-group <resource_group_created_above> --template-file azuredeploy.json --parameters azuredeploy.parameters.temp.json
-```
+  ```CLI
+  az deployment group create --name azuredeploy --resource-group <resource_group_created_above> --template-file azuredeploy.json --parameters azuredeploy.parameters.temp.json
+  ```
 
 5. Publish the Azure Function found under `./src/IoTEdgeDeploymentApi` through Visual Studio Code or Visual Studio IDE, per your preference.
 6. Add the Function Managed Identity to IoT Hub roles `IoT Hub Registry Contributor` and `IoT Hub Twin Contributor` so the function has permissions to call into the Azure IoT Hub API.
@@ -190,6 +199,5 @@ In your browser go to `https://<yourfunctionname>.azurewebsites.net/api/swagger/
 [def]: http://localhost:7071/api/swagger/ui
 [def2]: /.github/workflows/CD_Infra.yml
 [def3]: /deployment/createServicePrincipal.ps1
-[def4]: https://docs.github.com/en/actions/security-guides/encrypted-secrets#creating-encrypted-secrets-for-a-repository
 [def5]: /postman/IoTEdgeDeploymentService.postman_collection.json
 [def6]: https://learn.microsoft.com/en-us/powershell/azure/install-az-ps?view=azps-8.3.0
