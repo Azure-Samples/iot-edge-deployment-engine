@@ -15,34 +15,6 @@
                 "description": "Id of the AAD Tenant"
             }
         },
-        "ioTHubDataContributorId": {
-            "type": "string",
-            "defaultValue": "[newGuid()]",
-            "metadata": {
-                "description": "Id of the Role Assignment --> filled by default value and newGuid() function"
-            }
-        },
-        "ioTHubRegistryContributorId": {
-            "type": "string",
-            "defaultValue": "[newGuid()]",
-            "metadata": {
-                "description": "Id of the Role Assignment --> filled by default value and newGuid() function"
-            }
-        },
-        "ioTHubTwinContributorId": {
-            "type": "string",
-            "defaultValue": "[newGuid()]",
-            "metadata": {
-                "description": "Id of the Role Assignment --> filled by default value and newGuid() function"
-            }
-        },
-        "keyVaultSecretsUserId": {
-            "type": "string",
-            "defaultValue": "[newGuid()]",
-            "metadata": {
-                "description": "Id of the Role Assignment --> filled by default value and newGuid() function"
-            }
-        },
         "appId": {
             "type": "string",
             "metadata": {
@@ -298,7 +270,7 @@
         {
             "type": "Microsoft.Authorization/roleAssignments",
             "apiVersion": "2022-04-01",
-            "name": "[parameters('ioTHubDataContributorId')]",
+            "name": "[guid(resourceGroup().id)]",
             "dependsOn": [ "[resourceId('Microsoft.Web/sites', variables('azureFuncName'))]" ],
             "properties": {
                 "roleDefinitionId": "[variables('IoTHubDataContributor')]",
@@ -308,7 +280,7 @@
         {
             "type": "Microsoft.Authorization/roleAssignments",
             "apiVersion": "2022-04-01",
-            "name": "[parameters('ioTHubRegistryContributorId')]",
+            "name": "[guid(resourceGroup().id)]",
             "dependsOn": [ "[resourceId('Microsoft.Web/sites', variables('azureFuncName'))]" ],
             "properties": {
                 "roleDefinitionId": "[variables('IoTHubRegistryContributor')]",
@@ -318,7 +290,7 @@
         {
             "type": "Microsoft.Authorization/roleAssignments",
             "apiVersion": "2022-04-01",
-            "name": "[parameters('ioTHubTwinContributorId')]",
+            "name": "[guid(resourceGroup().id)]",
             "dependsOn": [ "[resourceId('Microsoft.Web/sites', variables('azureFuncName'))]" ],
             "properties": {
                 "roleDefinitionId": "[variables('IoTHubTwinContributor')]",
@@ -328,7 +300,7 @@
         {
             "type": "Microsoft.Authorization/roleAssignments",
             "apiVersion": "2022-04-01",
-            "name": "[parameters('keyVaultSecretsUserId')]",
+            "name": "[guid(resourceGroup().id)]",
             "dependsOn": [ "[resourceId('Microsoft.Web/sites', variables('azureFuncName'))]" ],
             "properties": {
                 "roleDefinitionId": "[variables('KeyVaultSecretsUser')]",
