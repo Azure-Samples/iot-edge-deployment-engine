@@ -14,6 +14,7 @@ using Microsoft.OpenApi.Models;
 using OpenApiHttpTriggerAuthorization = IoTEdgeDeploymentApi.Security.OpenApiHttpTriggerAuthorization;
 using Azure.Core;
 using Azure.Identity;
+using Azure.Security.KeyVault.Secrets;
 
 [assembly: FunctionsStartup(typeof(Startup))]
 
@@ -27,6 +28,7 @@ namespace IoTEdgeDeploymentApi
 		{
 			var rootDirectory = Environment.GetEnvironmentVariable("ROOT_MANIFESTS_FOLDER");
 			var iotHubHostname = Environment.GetEnvironmentVariable("IOTHUB_HOSTNAME");
+			var keyVaultUri = Environment.GetEnvironmentVariable("KEYVAULT_URI");
 			string rootDirectoryAutomatic = Path.Combine(rootDirectory, "AutomaticDeployment");
 			string rootDirectoryLayered = Path.Combine(rootDirectory, "LayeredDeployment");
 			CreateManifestSubFolders(rootDirectoryAutomatic);
@@ -37,6 +39,8 @@ namespace IoTEdgeDeploymentApi
 			builder.Services
 				.AddSingleton<RegistryManager>((s) =>
 					RegistryManager.Create(iotHubHostname, token))
+				.AddSingleton<SecretClient>((s) => new SecretClient(new Uri(keyVaultUri), token))
+				.AddScoped<IKeyVaultAccessor, KeyVaultAccessor>()
 				.AddScoped<IIoTEdgeDeploymentBuilder, IoTEdgeDeploymentBuilder>()
 				.AddSingleton<IIoTHubAccessor, IoTHubAccessor>()
 				.AddSingleton<IManifestConfig>(c => new ManifestConfig

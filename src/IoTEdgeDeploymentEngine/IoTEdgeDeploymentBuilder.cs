@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using IoTEdgeDeploymentEngine.Accessor;
 using IoTEdgeDeploymentEngine.Config;
@@ -19,15 +20,25 @@ namespace IoTEdgeDeploymentEngine
 	public class IoTEdgeDeploymentBuilder : IIoTEdgeDeploymentBuilder
 	{
 		private readonly IIoTHubAccessor _ioTHubAccessor;
+		private readonly IKeyVaultAccessor _keyVaultAccessor;
 		private readonly IManifestConfig _manifestConfig;
 		private readonly ILogger<IoTEdgeDeploymentBuilder> _logger;
+
+		private const string SecretNameRegEx = "{{(?<secretName>[^}]*)";
+
+		// / <summary>
+		// / Returns path for deployment manifest files
+		// / </summary>
+		// protected abstract string ManifestDirectory { get; }
 
 		/// <summary>
 		/// ctor
 		/// </summary>
-		public IoTEdgeDeploymentBuilder(IIoTHubAccessor ioTHubAccessor, IManifestConfig manifestConfig, ILogger<IoTEdgeDeploymentBuilder> logger)
+		public IoTEdgeDeploymentBuilder(IIoTHubAccessor ioTHubAccessor, IKeyVaultAccessor keyVaultAccessor,
+			IManifestConfig manifestConfig, ILogger<IoTEdgeDeploymentBuilder> logger)
 		{
 			_ioTHubAccessor = ioTHubAccessor;
+			_keyVaultAccessor = keyVaultAccessor;
 			_manifestConfig = manifestConfig;
 			_logger = logger;
 		}
@@ -37,9 +48,9 @@ namespace IoTEdgeDeploymentEngine
 		{
 			var files = await ReadAllFiles(_manifestConfig.DirectoryRootAutomatic,
 				_manifestConfig.DirectoryRootLayered);
-            _logger.LogDebug($"ApplyDeployments - total files in both directories: {files.Count}.");
+			_logger.LogDebug($"ApplyDeployments - total files in both directories: {files.Count}.");
 
-            var assignments = await CreateDeviceDeploymentAssignments(files);
+			var assignments = await CreateDeviceDeploymentAssignments(files);
 
 			//var deviceGroups = configurations.GroupBy(c => c.TargetCondition);
 			var tasks = new List<Task>();
@@ -47,8 +58,8 @@ namespace IoTEdgeDeploymentEngine
 			{
 				tasks.Add(ProcessDeviceAssignment(assignment));
 			}
-            
-            await Task.WhenAll(tasks);
+
+			await Task.WhenAll(tasks);
 		}
 
 		private async Task ProcessDeviceAssignment(KeyValuePair<string, List<DeploymentConfig>> assignment)
@@ -109,7 +120,8 @@ namespace IoTEdgeDeploymentEngine
 
         }
 
-		private async Task<Dictionary<string, List<DeploymentConfig>>> CreateDeviceDeploymentAssignments(Dictionary<string, Configuration> files)
+		private async Task<Dictionary<string, List<DeploymentConfig>>> CreateDeviceDeploymentAssignments(
+			Dictionary<string, Configuration> files)
 		{
 			var assignments = new Dictionary<string, List<DeploymentConfig>>();
 			foreach (var config in files)
@@ -131,8 +143,10 @@ namespace IoTEdgeDeploymentEngine
 					});
 				}
 			}
-            _logger.LogDebug($"CreateDeviceDeploymentAssignments - devices matching all target conditions: {assignments.Count}.");
-            
+
+			_logger.LogDebug(
+				$"CreateDeviceDeploymentAssignments - devices matching all target conditions: {assignments.Count}.");
+
 			return assignments;
 		}
 
@@ -155,8 +169,8 @@ namespace IoTEdgeDeploymentEngine
 			}
 			else
 			{
-                _logger.LogError($"Error in AddDeployment - number of tasks to run: FileName or FileContent missing.");
-                throw new ArgumentNullException("FileName or FileContent missing");
+				_logger.LogError($"Error in AddDeployment - number of tasks to run: FileName or FileContent missing.");
+				throw new ArgumentNullException("FileName or FileContent missing");
 			}
 		}
 
@@ -180,7 +194,7 @@ namespace IoTEdgeDeploymentEngine
 
 			return JsonConvert.DeserializeObject<dynamic>(content);
 		}
-		
+
 		/// <summary>
 		/// Reads all files and returns their contents in a list of configuration objects
 		/// </summary>
@@ -199,6 +213,7 @@ namespace IoTEdgeDeploymentEngine
 						throw new FileNotFoundException($"File {file} not found.");
 
 					var fileContent = await File.ReadAllTextAsync(file);
+					fileContent = await LoadSensitiveData(fileContent);
 					var config = JsonConvert.DeserializeObject<Configuration>(fileContent);
 
 					fileContents.Add(file, config);
@@ -207,6 +222,21 @@ namespace IoTEdgeDeploymentEngine
 
 			//_logger.LogTrace("Layered deployment files successfully read");
 			return fileContents;
+		}
+
+		private async Task<string> LoadSensitiveData(string file)
+		{
+			var regexMatch = Regex.Match(file, SecretNameRegEx, RegexOptions.IgnoreCase | RegexOptions.Compiled);
+
+			while (regexMatch.Success)
+			{
+				var secretName = regexMatch.Groups["secretName"].Value;
+				var secretValue = await _keyVaultAccessor.GetSecretByName(secretName);
+				file = file.Replace($"{{{{{secretName}}}}}", secretValue);
+				regexMatch = regexMatch.NextMatch();
+			}
+
+			return file;
 		}
 	}
 }

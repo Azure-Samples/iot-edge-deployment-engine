@@ -9,6 +9,7 @@ using IoTEdgeDeploymentEngine.Config;
 using dotenv.net.Utilities;
 using Azure.Identity;
 using Azure.Core;
+using Azure.Security.KeyVault.Secrets;
 
 DotEnv.Load();
 var host = ConfigureServices(args);
@@ -22,24 +23,26 @@ return;
 
 IHost ConfigureServices(string[] args)
 {
-    var iotHubHostName = EnvReader.GetStringValue("IOTHUB_HOSTNAME");
+	var iotHubHostName = EnvReader.GetStringValue("IOTHUB_HOSTNAME");
+	var keyVaultUri = EnvReader.GetStringValue("KEYVAULT_URI");
     var rootDirectory = EnvReader.GetStringValue("ROOT_MANIFESTS_FOLDER");
     string rootDirectoryAutomatic = Path.Combine(rootDirectory, "AutomaticDeployment");
     string rootDirectoryLayered = Path.Combine(rootDirectory, "LayeredDeployment");
 
-    return Host.CreateDefaultBuilder(args)
+	TokenCredential tokenCredential = new DefaultAzureCredential();
+	return Host.CreateDefaultBuilder(args)
 		.ConfigureServices((_, services) =>
-			services.AddScoped<RegistryManager>((s) => {
-				TokenCredential tokenCredential = new DefaultAzureCredential();
-				return RegistryManager.Create(iotHubHostName, tokenCredential);
-				})
+			services
+				.AddSingleton<RegistryManager>((s) => RegistryManager.Create(iotHubHostName, tokenCredential))				
+				.AddSingleton<SecretClient>((s) => new SecretClient(new Uri(keyVaultUri), tokenCredential))
+				.AddSingleton<IKeyVaultAccessor, KeyVaultAccessor>()
 				.AddScoped<IIoTEdgeDeploymentBuilder, IoTEdgeDeploymentBuilder>()
 				.AddSingleton<IIoTHubAccessor, IoTHubAccessor>()
 				.AddSingleton<IManifestConfig>(c => new ManifestConfig
-                {
-	                DirectoryRootAutomatic = rootDirectoryAutomatic,
-	                DirectoryRootLayered = rootDirectoryLayered
-                })
-                .AddLogging())
+				{
+					DirectoryRootAutomatic = rootDirectoryAutomatic,
+					DirectoryRootLayered = rootDirectoryLayered
+				})
+				.AddLogging())
 		.Build();
 }

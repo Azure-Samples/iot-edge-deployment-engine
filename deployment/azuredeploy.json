@@ -2,40 +2,45 @@
     "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
     "contentVersion": "1.0.0.0",
     "parameters": {
-        "iothubHostname": {
+        "resourceName": {
             "type": "string",
-            "metadata": {
-                "description": "IoT Hub host name in form of youriothubazure-devices.net"
-            }
-        },
-        "storageAccountName": {
-            "type": "string",
+            "maxLength": 20,
             "metadata": {
                 "description": "Name of the Storage Account"
-            }
-        },
-        "appInsightsName": {
-            "type": "string",
-            "metadata": {
-                "description": "Name of the AppInsights instance"
-            }
-        },
-        "azureFuncName": {
-            "type": "string",
-            "metadata": {
-                "description": "Name of the Azure Function"
-            }
-        },
-        "hostingPlanName": {
-            "type": "string",
-            "metadata": {
-                "description": "Name of the App Service Plan"
             }
         },
         "tenantId": {
             "type": "string",
             "metadata": {
                 "description": "Id of the AAD Tenant"
+            }
+        },
+        "ioTHubDataContributorId": {
+            "type": "string",
+            "defaultValue": "[newGuid()]",
+            "metadata": {
+                "description": "Id of the Role Assignment --> filled by default value and newGuid() function"
+            }
+        },
+        "ioTHubRegistryContributorId": {
+            "type": "string",
+            "defaultValue": "[newGuid()]",
+            "metadata": {
+                "description": "Id of the Role Assignment --> filled by default value and newGuid() function"
+            }
+        },
+        "ioTHubTwinContributorId": {
+            "type": "string",
+            "defaultValue": "[newGuid()]",
+            "metadata": {
+                "description": "Id of the Role Assignment --> filled by default value and newGuid() function"
+            }
+        },
+        "keyVaultSecretsUserId": {
+            "type": "string",
+            "defaultValue": "[newGuid()]",
+            "metadata": {
+                "description": "Id of the Role Assignment --> filled by default value and newGuid() function"
             }
         },
         "appId": {
@@ -54,11 +59,23 @@
     },
     "functions": [],
     "variables": {
-        "storageAccountId": "[concat(resourceGroup().id,'/providers/','Microsoft.Storage/storageAccounts/', parameters('StorageAccountName'))]"
+        "iotHubName": "[concat('iot-', parameters('resourceName'))]",
+        "iotHubHostName": "[concat(variables('iotHubName'), '.azure-devices.net')]",
+        "keyVaultName": "[concat('kv-', parameters('resourceName'))]",
+        "keyVaultUri": "[concat('https://', variables('keyVaultName'), '.vault.azure.net/')]",
+        "storageAccountName": "[concat('st', toLower(parameters('resourceName')))]",
+        "appInsightsName": "[concat('appi-', parameters('resourceName'))]",
+        "azureFuncName": "[concat('func-', parameters('resourceName'))]",
+        "hostingPlanName": "[concat('asp-', parameters('resourceName'))]",
+        "storageAccountId": "[concat(resourceGroup().id,'/providers/','Microsoft.Storage/storageAccounts/', variables('StorageAccountName'))]",
+        "IoTHubDataContributor": "[concat('/subscriptions/', subscription().subscriptionId, '/providers/Microsoft.Authorization/roleDefinitions/', '4fc6c259-987e-4a07-842e-c321cc9d413f')]",
+        "IoTHubRegistryContributor": "[concat('/subscriptions/', subscription().subscriptionId, '/providers/Microsoft.Authorization/roleDefinitions/', '4ea46cd5-c1b2-4a8e-910b-273211f9ce47')]",
+        "IoTHubTwinContributor": "[concat('/subscriptions/', subscription().subscriptionId, '/providers/Microsoft.Authorization/roleDefinitions/', '494bdba2-168f-4f31-a0a1-191d2f7c028c')]",
+        "KeyVaultSecretsUser": "[concat('/subscriptions/', subscription().subscriptionId, '/providers/Microsoft.Authorization/roleDefinitions/', '4633458b-17de-408a-b874-0445c86b69e6')]"
     },
     "resources": [
         {
-            "name": "[parameters('storageAccountName')]",
+            "name": "[variables('storageAccountName')]",
             "type": "Microsoft.Storage/storageAccounts",
             "apiVersion": "2021-08-01",
             "location": "[resourceGroup().location]",
@@ -71,27 +88,27 @@
             }
         },
         {
-            "name": "[parameters('appInsightsName')]",
+            "name": "[variables('appInsightsName')]",
             "type": "Microsoft.Insights/components",
             "apiVersion": "2020-02-02",
             "location": "[resourceGroup().location]",
             "kind": "web",
             "tags": {
-                "[concat('hidden-link:', resourceGroup().id, '/providers/Microsoft.Web/sites/', parameters('azureFuncName'))]": "Resource",
+                "[concat('hidden-link:', resourceGroup().id, '/providers/Microsoft.Web/sites/', variables('azureFuncName'))]": "Resource",
                 "displayName": "AppInsightsComponent"
             },
             "properties": {
-                "applicationId": "[parameters('azureFuncName')]",
+                "applicationId": "[variables('azureFuncName')]",
                 "application_Type": "web"
             }
         },
         {
-            "name": "[concat(parameters('appInsightsName'),'/Basic')]",
+            "name": "[concat(variables('appInsightsName'),'/Basic')]",
             "type": "microsoft.insights/components/CurrentBillingFeatures",
             "location": "[resourceGroup().location]",
             "apiVersion": "2015-05-01",
             "dependsOn": [
-                "[resourceId('microsoft.insights/components/', parameters('appInsightsName'))]"
+                "[resourceId('microsoft.insights/components/', variables('appInsightsName'))]"
             ],
             "properties": {
                 "CurrentBillingFeatures": "Basic",
@@ -104,7 +121,7 @@
         },
         {
             "apiVersion": "2021-03-01",
-            "name": "[parameters('hostingPlanName')]",
+            "name": "[variables('hostingPlanName')]",
             "type": "Microsoft.Web/serverfarms",
             "location": "[resourceGroup().location]",
             "sku": {
@@ -114,7 +131,7 @@
             "properties": {}
         },
         {
-            "name": "[parameters('azureFuncName')]",
+            "name": "[variables('azureFuncName')]",
             "type": "Microsoft.Web/sites",
             "apiVersion": "2020-12-01",
             "location": "[resourceGroup().location]",
@@ -123,15 +140,15 @@
                 "type": "SystemAssigned"
             },
             "dependsOn": [
-                "[resourceId('Microsoft.Web/serverfarms', parameters('hostingPlanName'))]",
-                "[resourceId('Microsoft.Storage/storageAccounts', parameters('storageAccountName'))]"
+                "[resourceId('Microsoft.Web/serverfarms', variables('hostingPlanName'))]",
+                "[resourceId('Microsoft.Storage/storageAccounts', variables('storageAccountName'))]"
             ],
             "resources": [
                 {
                     "type": "Microsoft.Web/sites/config",
                     "apiVersion": "2022-03-01",
-                    "name": "[concat(parameters('azureFuncName'), '/authsettingsV2')]",
-                    "dependsOn": [ "[resourceId('Microsoft.Web/sites', parameters('azureFuncName'))]" ],
+                    "name": "[concat(variables('azureFuncName'), '/authsettingsV2')]",
+                    "dependsOn": [ "[resourceId('Microsoft.Web/sites', variables('azureFuncName'))]" ],
                     "kind": "string",
                     "properties": {
                         "globalValidation": {
@@ -157,24 +174,24 @@
                 }
             ],
             "properties": {
-                "serverFarmId": "[resourceId('Microsoft.Web/serverfarms', parameters('hostingPlanName'))]",
+                "serverFarmId": "[resourceId('Microsoft.Web/serverfarms', variables('hostingPlanName'))]",
                 "siteConfig": {
                     "appSettings": [
                         {
                             "name": "AzureWebJobsStorage",
-                            "value": "[concat('DefaultEndpointsProtocol=https;AccountName=', parameters('storageAccountName'), ';AccountKey=', listKeys(variables('storageAccountId'),'2015-05-01-preview').key1)]"
+                            "value": "[concat('DefaultEndpointsProtocol=https;AccountName=', variables('storageAccountName'), ';AccountKey=', listKeys(variables('storageAccountId'),'2015-05-01-preview').key1)]"
                         },
                         {
-                        "name": "WEBSITE_CONTENTAZUREFILECONNECTIONSTRING",
-                        "value": "[format('DefaultEndpointsProtocol=https;AccountName={0};EndpointSuffix={1};AccountKey={2}', parameters('storageAccountName'), environment().suffixes.storage, listKeys(resourceId('Microsoft.Storage/storageAccounts', parameters('storageAccountName')), '2021-08-01').keys[0].value)]"
-                        },                        
+                            "name": "WEBSITE_CONTENTAZUREFILECONNECTIONSTRING",
+                            "value": "[format('DefaultEndpointsProtocol=https;AccountName={0};EndpointSuffix={1};AccountKey={2}', variables('storageAccountName'), environment().suffixes.storage, listKeys(resourceId('Microsoft.Storage/storageAccounts', variables('storageAccountName')), '2021-08-01').keys[0].value)]"
+                        },
                         {
                             "name": "FUNCTIONS_EXTENSION_VERSION",
                             "value": "~4"
                         },
                         {
                             "name": "APPINSIGHTS_INSTRUMENTATIONKEY",
-                            "value": "[reference(resourceId('microsoft.insights/components/', parameters('appInsightsName')), '2015-05-01').InstrumentationKey]"
+                            "value": "[reference(resourceId('microsoft.insights/components/', variables('appInsightsName')), '2015-05-01').InstrumentationKey]"
                         },
                         {
                             "name": "FUNCTIONS_WORKER_RUNTIME",
@@ -202,14 +219,120 @@
                         },
                         {
                             "name": "IOTHUB_HOSTNAME",
-                            "value": "[parameters('iothubHostname')]"
+                            "value": "[variables('iothubHostname')]"
                         },
                         {
                             "name": "ROOT_MANIFESTS_FOLDER",
                             "value": "[parameters('manifestsRootFolder')]"
+                        },
+                        {
+                            "name": "KEYVAULT_URI",
+                            "value": "[variables('keyVaultUri')]"
                         }
                     ]
                 }
+            }
+        },
+        {
+            "type": "Microsoft.KeyVault/vaults",
+            "apiVersion": "2022-07-01",
+            "name": "[variables('keyVaultName')]",
+            "location": "[resourceGroup().location]",
+            "properties": {
+                "sku": {
+                    "family": "A",
+                    "name": "Standard"
+                },
+                "tenantId": "[subscription().tenantId]",
+                "accessPolicies": [],
+                "enabledForDeployment": false,
+                "enabledForDiskEncryption": false,
+                "enabledForTemplateDeployment": true,
+                "enableSoftDelete": true,
+                "softDeleteRetentionInDays": 90,
+                "enableRbacAuthorization": true,
+                "publicNetworkAccess": "Enabled"
+            }
+        },
+        {
+            "type": "Microsoft.Security/IoTSecuritySolutions",
+            "apiVersion": "2019-08-01",
+            "name": "[variables('iotHubName')]",
+            "location": "[resourceGroup().location]",
+            "properties": {
+                "status": "Enabled",
+                "unmaskedIpLoggingStatus": "Enabled",
+                "disabledDataSources": [],
+                "displayName": "[variables('iotHubName')]",
+                "iotHubs": [
+                    "[resourceId('Microsoft.Devices/IotHubs', variables('iotHubName'))]"
+                ],
+                "recommendationsConfiguration": []
+            },
+            "dependsOn": [
+                "[resourceId('Microsoft.Devices/IotHubs', variables('iotHubName'))]"
+            ]
+        },
+        {
+            "apiVersion": "2022-04-30-preview",
+            "type": "Microsoft.Devices/IotHubs",
+            "name": "[variables('iotHubName')]",
+            "location": "[resourceGroup().location]",
+            "properties": {
+                "eventHubEndpoints": {
+                    "events": {
+                        "retentionTimeInDays": 1,
+                        "partitionCount": 4
+                    }
+                },
+                "features": "None",
+                "enableDataResidency": false,
+                "disableLocalAuth": false
+            },
+            "sku": {
+                "name": "S1",
+                "tier": "Standard",
+                "capacity": 1
+            }
+        },
+        {
+            "type": "Microsoft.Authorization/roleAssignments",
+            "apiVersion": "2022-04-01",
+            "name": "[parameters('ioTHubDataContributorId')]",
+            "dependsOn": [ "[resourceId('Microsoft.Web/sites', variables('azureFuncName'))]" ],
+            "properties": {
+                "roleDefinitionId": "[variables('IoTHubDataContributor')]",
+                "principalId": "[reference(resourceId('Microsoft.Web/sites', variables('azureFuncName')), '2019-08-01', 'full').identity.principalId]"
+            }
+        },
+        {
+            "type": "Microsoft.Authorization/roleAssignments",
+            "apiVersion": "2022-04-01",
+            "name": "[parameters('ioTHubRegistryContributorId')]",
+            "dependsOn": [ "[resourceId('Microsoft.Web/sites', variables('azureFuncName'))]" ],
+            "properties": {
+                "roleDefinitionId": "[variables('IoTHubRegistryContributor')]",
+                "principalId": "[reference(resourceId('Microsoft.Web/sites', variables('azureFuncName')), '2019-08-01', 'full').identity.principalId]"
+            }
+        },
+        {
+            "type": "Microsoft.Authorization/roleAssignments",
+            "apiVersion": "2022-04-01",
+            "name": "[parameters('ioTHubTwinContributorId')]",
+            "dependsOn": [ "[resourceId('Microsoft.Web/sites', variables('azureFuncName'))]" ],
+            "properties": {
+                "roleDefinitionId": "[variables('IoTHubTwinContributor')]",
+                "principalId": "[reference(resourceId('Microsoft.Web/sites', variables('azureFuncName')), '2019-08-01', 'full').identity.principalId]"
+            }
+        },
+        {
+            "type": "Microsoft.Authorization/roleAssignments",
+            "apiVersion": "2022-04-01",
+            "name": "[parameters('keyVaultSecretsUserId')]",
+            "dependsOn": [ "[resourceId('Microsoft.Web/sites', variables('azureFuncName'))]" ],
+            "properties": {
+                "roleDefinitionId": "[variables('KeyVaultSecretsUser')]",
+                "principalId": "[reference(resourceId('Microsoft.Web/sites', variables('azureFuncName')), '2019-08-01', 'full').identity.principalId]"
             }
         }
     ],

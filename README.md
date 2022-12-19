@@ -158,11 +158,7 @@ az group create -n <name> --location <location>
 - `AZURE_CREDENTIALS` --> store the json by following the [instructions](https://learn.microsoft.com/en-us/azure/azure-resource-manager/templates/deploy-github-actions?tabs=userlevel#generate-deployment-credentials) to obtain your subscription credentials. Provide the resource group name created in step 2 above.
 - `AZURE_SUBSCRIPTION` --> Azure Subscription id
 - `AZURE_RG` --> Azure Resource Group name you created in step 2
-- `IOTHUB_HOSTNAME` --> Azure IoTHub connection string with Registry Read and Write permissions (existing IoT Hub)
-- `STORAGEACCOUNT_NAME` --> Azure Storage Account name that will be created
-- `APPINSIGHTS_NAME` --> Azure Application Insights name that will be created
-- `HOSTINGPLAN_NAME` --> Azure App Service Plan name that will be created
-- `AZUREFUNC_NAME` --> Azure Functions name that will be created, you should use the same name as the first App registration like `<yourprefixIoTEdgeDeploymentEngine>`
+- `RESOURCE_NAME` --> name of all Azure resource deployed by the ARM template, prefixes are added inline by using [official recommendations](https://learn.microsoft.com/en-us/azure/cloud-adoption-framework/ready/azure-best-practices/resource-abbreviations)
 - `TENANT_ID` --> Id of the AAD Tenant
 - `APP_ID` --> Id (ClientId) of the first App Registration in step above among **Securitiy** section
 - ``
