@@ -69,13 +69,16 @@ Executes an automatic base and any additional layerr into a ingle per device dep
 - PowerShell 7.0.6 LTS or PowerShell 7.1.3 or higher (on Windows only: Windows PowerShell 5.1 is sufficient)
 - [Az PowerShell][def6]
 - Have an IoT Hub available.
-- In your IoT Hub, assign your own user to the RBAC roles `IoT Hub Registry Contributor` and `IoT Hub Twin Contributor`. This will give your developer account permissions to run the Function and Tester application with Visual Studio (Code) using the Azure credentials.
+- In your IoT Hub, assign your own user to the RBAC roles `IoT Hub Registry Contributor`, `IoT Hub Twin Contributor` and `IoT Hub Data Contributor`. This will give your developer account permissions to run the Function and Tester application with Visual Studio (Code) using the Azure credentials.
+- Have a Azure Key Vault available with managed identity authorization.
+- In your Azure Key Vault, assign your own user to the RBAC roles `Key Vault Secrets User` and `Key Vault Secrets Officer`. This will give your developer account permissions to run the Function and Tester application with Visual Studio (Code) using the Azure credentials. The latter one is not required to run the program but it allows you to add secrets to the Key Vault which are used to replaced the placeholders in the manifest file with sensitive data.
 
 #### Setup App Registrations via PowerShell
 
 The following steps need to be executed manually due to limited permissions we will be assigning to a Service Principal to run other parts via GitHub Actions.
 
 1. Execute `Connect-AzAccount -subscriptionId <yourSubscriptionId> -tenantId <yourTenantId>` to login to your Azure subscription in your PowerShell session
+
 2. Execute the [PowerShell script][def3] by specifying the parameters tenantName (e.g. myTenantName.onmicrosoft.com) and app registration name (e.g. `yourprefixIoTEdgeDeploymentEngine`)
 
   ```powershell
@@ -98,11 +101,32 @@ The following steps need to be executed manually due to limited permissions we w
 - navigate to the "Users and groups" section and add users of your choice
 ![alt text](images/SPUsers.png "Add SP´s users")
 
-#### Run the Azure Function locally in Visual Studio (Code or full IDE)
+#### Setup Azure resources via PowerShell
+
+The following steps can be used to deploy the ARM template instead of using the GitHub Actions workflow (described in a section below). It deploys all Azure artifacts without Azure Functions code which is not required as executed locally.
+
+1. Execute `Connect-AzAccount -subscriptionId <yourSubscriptionId> -tenantId <yourTenantId>` to login to your Azure subscription in your PowerShell session.
+
+2. Navigate to ./deployment directory.
+
+3. Execute the [PowerShell script][def7] by specifying the parameters
+
+- resourceGroupName - target Azure Resource Group (will be created if it doesn´t exist)
+- location - location for your Resource Group (default: West Europe)
+- resourceName - base name for all your resource (prefix added by ARM template inline)
+- tenantId - id of the Azure tenant used for your Active Directory resources
+- appId - App Registration id of the first app registration from the step above in previous section (e.g. `yourprefixIoTEdgeDeploymentEngine`)
+
+  ```powershell
+  ./deployment/deployArmTemplate.ps1 -resourceGroupName <yourRG> -location <yourLocation> -resourceName <yourResourceName> -tenantId <yourAADtenantId> -appId <yourprefixIoTEdgeDeploymentEngineId>
+  ```
+
+#### Run the Azure Functions locally in Visual Studio (Code or full IDE)
 
 1. Create a `local.settings.json` file in the Functions project root `src/IoTEdgeDeploymentApi`. You can copy the initial content from `local.settings.json.template` provided in the repo and update the values.
 
 - `IOTHUB_HOSTNAME` = IoT Hub host name
+- `KEYVAULT_URI` = Key Vault uri
 - `ROOT_MANIFESTS_FOLDER` = Local absolute path to the `./manifests` folder in this repo.
 - `OpenApi__Auth__TenantId` = your AAD tenant ID
 - `OpenApi__Auth__Scope` = the name of the scope you created in Azure AD for the first app registration. Looks something like `https://xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx.fdpo.onmicrosoft.com/user_impersonation`
@@ -141,10 +165,17 @@ A simple app that can test the engine.
 - Visual Studio Code or Visual Studio 2022
 - Azure CLI
 - Have an IoT Hub available.
-- Add your own user to the RBAC roles `IoT Hub Registry Contributor`, `IoT Hub Twin Contributor` and `IoT Hub Data Owner` to the above IoT Hub. This will give your developer account permissions to run the Function and Tester application with Visual Studio (Code) using the Azure credentials.
+- Add your own user to the RBAC roles `IoT Hub Registry Contributor`, `IoT Hub Twin Contributor` and `IoT Hub Data Contributor` to the above IoT Hub. This will give your developer account permissions to run the Function and Tester application with Visual Studio (Code) using the Azure credentials.
+- Have a Azure Key Vault available with managed identity authorization.
+- In your Azure Key Vault, assign your own user to the RBAC roles `Key Vault Secrets User` and `Key Vault Secrets Officer`. This will give your developer account permissions to run the Function and Tester application with Visual Studio (Code) using the Azure credentials. The latter one is not required to run the program but it allows you to add secrets to the Key Vault which are used to replaced the placeholders in the manifest file with sensitive data.
 
 1. Create a `.env` file based on the `.env.template` file in the project folder.
-2. Supply the absolute path to the `./manifests` folder in this repo.
+2. Supply the
+
+  - `IOTHUB_HOSTNAME` = Key Vault uri
+  - `KEYVAULT_URI` = Key Vault uri
+  - `ROOT_MANIFESTS_FOLDER` = absolute path to the `./manifests` folder in this repo.
+
 3. Include additional DI registration and methods calls of your choice into the Program.cs.
 
 ## Deployment in Azure
@@ -168,9 +199,6 @@ You have two options for provisioning Azure resources and deploying the function
 - `RESOURCE_NAME` --> name of all Azure resource deployed by the ARM template, prefixes are added inline by using [official recommendations](https://learn.microsoft.com/en-us/azure/cloud-adoption-framework/ready/azure-best-practices/resource-abbreviations)
 - `TENANT_ID` --> Id of the AAD Tenant
 - `APP_ID` --> Id (ClientId) of the first App Registration in step above among **Securitiy** section
-- ``
-
-4. The GitHub action will trigger and provision the Azure resources. The last step is to add the Function Managed Identity to IoT Hub roles `IoT Hub Registry Contributor` and `IoT Hub Twin Contributor` so the function can call into the Azure IoT Hub.
 
 ### From local environment with Azure CLI and Visual Studio Code
 
@@ -189,7 +217,7 @@ You have two options for provisioning Azure resources and deploying the function
   ```
 
 5. Publish the Azure Function found under `./src/IoTEdgeDeploymentApi` through Visual Studio Code or Visual Studio IDE, per your preference.
-6. Add the Function Managed Identity to IoT Hub roles `IoT Hub Registry Contributor` and `IoT Hub Twin Contributor` so the function has permissions to call into the Azure IoT Hub API.
+6. Add your User Managed Identity to IoT Hub roles `IoT Hub Registry Contributor`, `IoT Hub Twin Contributor` and `IoT Hub Data Contributor` so the function has permissions to call into the Azure IoT Hub API and also the `Key Vault Secrets User` and `Key Vault Secrets Officer` roles to call the Key Vault instance (last one only required to manually add secrets via Azure Portal, not for running the Azure Functions itself).
 
 ### Testing the Azure Function in the cloud
 
@@ -201,3 +229,4 @@ In your browser go to `https://<yourfunctionname>.azurewebsites.net/api/swagger/
 [def3]: /deployment/createServicePrincipal.ps1
 [def5]: /postman/IoTEdgeDeploymentService.postman_collection.json
 [def6]: https://learn.microsoft.com/en-us/powershell/azure/install-az-ps?view=azps-8.3.0
+[def7]: /deployment/deployArmTemplate.ps1

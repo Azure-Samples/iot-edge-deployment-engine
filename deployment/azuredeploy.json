@@ -6,7 +6,7 @@
             "type": "string",
             "maxLength": 20,
             "metadata": {
-                "description": "Name of the Storage Account"
+                "description": "Name of the Azure resources"
             }
         },
         "tenantId": {

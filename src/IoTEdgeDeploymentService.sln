@@ -20,6 +20,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "deployment", "deployment", 
 		..\deployment\azuredeploy.json = ..\deployment\azuredeploy.json
 		..\deployment\azuredeploy.parameters.json = ..\deployment\azuredeploy.parameters.json
 		..\deployment\createServicePrincipal.ps1 = ..\deployment\createServicePrincipal.ps1
+		..\deployment\deployArmTempate.ps1 = ..\deployment\deployArmTempate.ps1
 	EndProjectSection
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "postman", "postman", "{45CA2DC0-1EAA-4158-ADA7-7828F2759970}"
