@@ -1,5 +1,6 @@
 using System.Threading.Tasks;
 using Azure.Security.KeyVault.Secrets;
+using Microsoft.Extensions.Azure;
 
 namespace IoTEdgeDeploymentEngine.Accessor
 {
@@ -21,7 +22,7 @@ namespace IoTEdgeDeploymentEngine.Accessor
 		public async Task<string> GetSecretByName(string secretName)
 		{
 			var secret = await _secretClient.GetSecretAsync(secretName);
-
+			
 			return secret?.Value.Value;
 		}
 	}

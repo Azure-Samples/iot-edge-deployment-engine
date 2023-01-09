@@ -9,7 +9,15 @@
                     "schemaVersion": "1.1",
                     "runtime": {
                         "type": "docker",
-                        "settings": {}
+                        "settings": {
+                            "registryCredentials": {
+                                "blub": {
+                                    "address": "{{address}}",
+                                    "password": "{{password}}",
+                                    "username": "{{username}}"
+                                }
+                            }
+                        }
                     },
                     "systemModules": {
                         "edgeAgent": {

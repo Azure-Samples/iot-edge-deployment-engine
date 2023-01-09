@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Immutable;
 using System.IO;
 using IoTEdgeDeploymentApi;
 using IoTEdgeDeploymentEngine;
@@ -15,6 +16,8 @@ using OpenApiHttpTriggerAuthorization = IoTEdgeDeploymentApi.Security.OpenApiHtt
 using Azure.Core;
 using Azure.Identity;
 using Azure.Security.KeyVault.Secrets;
+using IoTEdgeDeploymentEngine.Extension;
+using Polly.Registry;
 
 [assembly: FunctionsStartup(typeof(Startup))]
 
@@ -34,14 +37,33 @@ namespace IoTEdgeDeploymentApi
 			CreateManifestSubFolders(rootDirectoryAutomatic);
 			CreateManifestSubFolders(rootDirectoryLayered);
 
-			TokenCredential token = new DefaultAzureCredential();
+			TokenCredential tokenCredential = new DefaultAzureCredential();
 
 			builder.Services
 				.AddSingleton<RegistryManager>((s) =>
-					RegistryManager.Create(iotHubHostname, token))
-				.AddSingleton<SecretClient>((s) => new SecretClient(new Uri(keyVaultUri), token))
+					RegistryManager.Create(iotHubHostname, tokenCredential))
+				.AddSingleton<SecretClient>((s) => new SecretClient(new Uri(keyVaultUri), tokenCredential, new SecretClientOptions()
+				{
+					Retry = 
+					{
+						MaxRetries = 3,
+						Delay = TimeSpan.FromSeconds(5),
+						MaxDelay = TimeSpan.FromSeconds(15),
+						Mode = RetryMode.Exponential,
+						NetworkTimeout = TimeSpan.FromSeconds(60)
+					}
+				}))
 				.AddScoped<IKeyVaultAccessor, KeyVaultAccessor>()
 				.AddScoped<IIoTEdgeDeploymentBuilder, IoTEdgeDeploymentBuilder>()
+				.AddScoped<IPolicyRegistry<string>>(_ =>
+				{
+					var policyRegistry = new PolicyRegistry();
+					policyRegistry
+						.AddExponentialBackoffRetryPolicy()
+						.AddInfiniteRetryPolicy()
+						.AddCircuitBreakerPolicy();
+					return policyRegistry;
+				})
 				.AddSingleton<IIoTHubAccessor, IoTHubAccessor>()
 				.AddSingleton<IManifestConfig>(c => new ManifestConfig
 				{

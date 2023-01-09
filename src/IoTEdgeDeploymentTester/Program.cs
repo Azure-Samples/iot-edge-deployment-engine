@@ -10,6 +10,9 @@ using dotenv.net.Utilities;
 using Azure.Identity;
 using Azure.Core;
 using Azure.Security.KeyVault.Secrets;
+using IoTEdgeDeploymentEngine.Extension;
+using Polly;
+using Polly.Registry;
 
 DotEnv.Load();
 var host = ConfigureServices(args);
@@ -34,8 +37,28 @@ IHost ConfigureServices(string[] args)
 		.ConfigureServices((_, services) =>
 			services
 				.AddSingleton<RegistryManager>((s) => RegistryManager.Create(iotHubHostName, tokenCredential))				
-				.AddSingleton<SecretClient>((s) => new SecretClient(new Uri(keyVaultUri), tokenCredential))
+				.AddSingleton<SecretClient>((s) => new SecretClient(new Uri(keyVaultUri), tokenCredential, new SecretClientOptions()
+				{
+					Retry = 
+					{
+						MaxRetries = 3,
+						Delay = TimeSpan.FromSeconds(5),
+						MaxDelay = TimeSpan.FromSeconds(15),
+						Mode = RetryMode.Exponential,
+						NetworkTimeout = TimeSpan.FromSeconds(60)
+					}
+				}))
 				.AddSingleton<IKeyVaultAccessor, KeyVaultAccessor>()
+				.AddScoped<IIoTEdgeDeploymentBuilder, IoTEdgeDeploymentBuilder>()
+				.AddScoped<IPolicyRegistry<string>>(_ =>
+				{
+					var policyRegistry = new PolicyRegistry();
+					policyRegistry
+						.AddExponentialBackoffRetryPolicy()
+						.AddInfiniteRetryPolicy()
+						.AddCircuitBreakerPolicy();
+					return policyRegistry;
+				})
 				.AddScoped<IIoTEdgeDeploymentBuilder, IoTEdgeDeploymentBuilder>()
 				.AddSingleton<IIoTHubAccessor, IoTHubAccessor>()
 				.AddSingleton<IManifestConfig>(c => new ManifestConfig
