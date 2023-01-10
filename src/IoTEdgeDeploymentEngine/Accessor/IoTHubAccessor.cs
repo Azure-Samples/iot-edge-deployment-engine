@@ -14,13 +14,12 @@ namespace IoTEdgeDeploymentEngine.Accessor
 		private readonly RegistryManager _registryManager;
 		private readonly IAsyncPolicy _retryPolicy;
 
-		/// <summary>
-		/// ctor
-		/// </summary>
-		/// <param name="registryManager">RegistryManager instance</param>
-		/// <param name="retryPolicy">Retry policy</param>
-		/// <param name="circuitBreakerPolicy">CircuitBreaker</param>
-		public IoTHubAccessor(RegistryManager registryManager, IPolicyRegistry<string> policyRegistry)
+        /// <summary>
+        /// ctor
+        /// </summary>
+        /// <param name="registryManager">RegistryManager instance</param>
+        /// <param name="policyRegistry">Retry policy</param>
+        public IoTHubAccessor(RegistryManager registryManager, IPolicyRegistry<string> policyRegistry)
 		{
 			_registryManager = registryManager;
 			

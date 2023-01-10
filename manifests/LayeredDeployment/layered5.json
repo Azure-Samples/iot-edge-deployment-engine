@@ -19,7 +19,7 @@
             "OPCPublisher": {}
         }
     },
-    "targetCondition": "tags.env='device100'",
+    "targetCondition": "tags.env='device100' or tags.iiot=true",
     "createdTimeUtc": "2022-12-13T12:20:29.1437654Z",
     "lastUpdatedTimeUtc": "2022-12-13T12:20:29.1437654Z",
     "priority": 5,

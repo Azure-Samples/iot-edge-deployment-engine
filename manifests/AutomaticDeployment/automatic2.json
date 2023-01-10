@@ -75,7 +75,7 @@
                     },
                     "routes": {
                         "FromMetricsCollectorToUpstream": {
-                            "route": "FROM /messages/modules/< FROM_MODULE_NAME >/* INTO $upstream"
+                            "route": "FROM /messages/modules/IoTEdgeMetricsCollector/* INTO $upstream"
                         }
                     }
                 }
@@ -83,7 +83,7 @@
             "IoTEdgeMetricsCollector": {}
         }
     },
-    "targetCondition": "tags.env='device100' or tags.env='device200'",
+    "targetCondition": "tags.env='device200' or tags.iiot=true",
     "createdTimeUtc": "2022-12-13T12:17:29.8068798Z",
     "lastUpdatedTimeUtc": "2022-12-13T12:17:29.8068798Z",
     "priority": 2,

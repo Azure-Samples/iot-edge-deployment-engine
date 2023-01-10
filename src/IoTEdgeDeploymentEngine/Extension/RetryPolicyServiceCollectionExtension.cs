@@ -27,9 +27,9 @@ namespace IoTEdgeDeploymentEngine.Extension
 			int retryCount = 10)
 		{
 			var policy = Policy
-				.Handle<Exception>()
+				.Handle<Microsoft.Azure.Devices.Common.Exceptions.ThrottlingException>()
+				.Or<Microsoft.Azure.Devices.Common.Exceptions.IotHubThrottledException>()
 				.WaitAndRetryAsync(retryCount, retryAttempt => TimeSpan.FromSeconds(Math.Pow(2, retryAttempt)));
-
 			policyRegistry.Add(PolicyNames.ExponentialBackoffRetryPolicy.ToString(), policy);
 
 			return policyRegistry;
@@ -69,5 +69,6 @@ namespace IoTEdgeDeploymentEngine.Extension
 
 			return policyRegistry;
 		}
+
 	}
 }

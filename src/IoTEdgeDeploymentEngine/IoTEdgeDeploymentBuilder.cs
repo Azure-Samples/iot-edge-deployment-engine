@@ -52,7 +52,6 @@ namespace IoTEdgeDeploymentEngine
 
 			var assignments = await CreateDeviceDeploymentAssignments(files);
 
-			//var deviceGroups = configurations.GroupBy(c => c.TargetCondition);
 			var tasks = new List<Task>();
 			foreach (var assignment in assignments)
 			{
