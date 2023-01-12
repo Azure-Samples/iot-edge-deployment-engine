@@ -24,15 +24,59 @@ So, this leads to the need to build an own deployment engine without limitation 
 
 ## File-based IoTEdgeDeploymentEngine
 
-### Layered Deployment
+### Sequence Diagram for Deployment Processing
 
-Consolidates deployment manifests per device tag and target condition and creates a merged version including the determined modules and routes to be applied on the devices.
-Deployment manifest are stored on the file system in the default schema.
+::: mermaid
+sequenceDiagram
+    autonumber
+    participant E as Deployment Engine
+    participant I as IoT Hub
+    participant K as Key Vault
+    participant O as IoTEdgeObjectModel
+    activate E
+    E ->> E: reading and parsing manifest files from local directory
+    E ->> K: getting sensitive data from secrets store
+    activate K
+    K ->> E: providing secret values
+    deactivate K
+    E ->> E: replacing sensitive data
+    E ->> I: retrieving devices matching target condition
+    activate I
+    I -->> E: returning devices
+    deactivate I
+    E ->> E: preparing device assignments per manifest file
+    E ->> E: determining deployments to be considered
+    E ->> E: consolidating systemmodule properties, modules, routes
+    E ->> O: requesting device configuration by consolidated data
+    activate O
+    O -->> E: returning configuratonContent object structure
+    deactivate O
+    E --> I: sending new device configuration
+    activate I
+    I --> I: processing device configuration
+    deactivate I
+    deactivate E
+:::
 
-### Automatic Deployment
+### Automatic and Layered Deployment Rules
 
-Applies the latest relevant deployment manifest per device tag based on the highest priority setting to the devices.
-As well as for layered deployments the configurations are stored on the file system.
+IoT Hub applies automatic and layered deployments in a consolidated fashion based on predefined rules based on priority per devices met by the target condition.
+
+A layered deployment requires an automatic deployment - including system modules like EdgeAgent and EdgeHub - as base deployment to get applied.
+That means that every layered deployment with a lower priority than the automatic deployment with the highest priority is not applied to the subset of devices while only the automatic deployment with highest priority is deployed as well.
+
+The following flow charts outlines those rules.
+
+::: mermaid
+graph TD
+  A(Deployment Engine) -->|Deployment manifest files| B[Check for automatic deployment];
+  B --> C{Automatic deployment available?};
+  C -->|No| D[Done, no deployment gets applied];
+  C -->|Yes| E[Check layered deployment priority];
+  E --> F{"Layered deployment priority<br>greater than<br>automatic deployment priority"};
+  F -->|No| G[Only automatic deployment gets applied];
+  F --> |YES| H["Consolidated automatic and<br>layered deployments get applied"];
+:::
 
 ## Azure Functions IoTEdgeDeploymentApi
 
