@@ -26,7 +26,7 @@ So, this leads to the need to build an own deployment engine without limitation 
 
 ### Sequence Diagram for Deployment Processing
 
-::: mermaid
+``` mermaid
 sequenceDiagram
     autonumber
     participant E as Deployment Engine
@@ -56,7 +56,7 @@ sequenceDiagram
     I --> I: processing device configuration
     deactivate I
     deactivate E
-:::
+```
 
 ### Automatic and Layered Deployment Rules
 
@@ -67,7 +67,7 @@ That means that every layered deployment with a lower priority than the automati
 
 The following flow charts outlines those rules.
 
-::: mermaid
+``` mermaid
 graph TD
   A(Deployment Engine) -->|Deployment manifest files| B[Check for automatic deployment];
   B --> C{Automatic deployment available?};
@@ -76,7 +76,7 @@ graph TD
   E --> F{"Layered deployment priority<br>greater than<br>automatic deployment priority"};
   F -->|No| G[Only automatic deployment gets applied];
   F --> |YES| H["Consolidated automatic and<br>layered deployments get applied"];
-:::
+```
 
 ## Azure Functions IoTEdgeDeploymentApi
 
