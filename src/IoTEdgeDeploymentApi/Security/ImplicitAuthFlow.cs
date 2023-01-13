@@ -29,9 +29,6 @@ namespace IoTEdgeDeploymentApi.Security
                 {
                     {
                         defaultScope ?? string.Empty, "Default scope defined in the app"
-                    },
-                    {
-                        "https://graph.microsoft.com/.default", "Default scope defined in the app"
                     }
                 }
             };

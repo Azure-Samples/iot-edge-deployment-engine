@@ -108,6 +108,8 @@ namespace IoTEdgeDeploymentApi
         /// <returns></returns>
 		[FunctionName("ApplyDeployments")]
 		[OpenApiOperation(operationId: "ApplyDeployments", tags: new[] { "IoTEdgeAutomaticDeployment" })]
+		[OpenApiSecurity("implicit_auth", SecuritySchemeType.OAuth2, Flows = typeof(ImplicitAuthFlow))]
+		[OpenApiSecurity("bearer_auth", SecuritySchemeType.Http, Scheme = OpenApiSecuritySchemeType.Bearer, BearerFormat = "JWT")]
         public async Task<IActionResult> ApplyDeployments(
 			[HttpTrigger(AuthorizationLevel.Anonymous, "post", Route = null)] HttpRequest req)
         {

@@ -270,43 +270,63 @@
         {
             "type": "Microsoft.Authorization/roleAssignments",
             "apiVersion": "2022-04-01",
-            "name": "49d73351-fb1b-491f-96b1-da6145fb9557",
+            "name": "[guid(resourceGroup().id, 'iotHubDataContributor')]",
             "dependsOn": [ "[resourceId('Microsoft.Web/sites', variables('azureFuncName'))]" ],
             "properties": {
                 "roleDefinitionId": "[variables('IoTHubDataContributor')]",
-                "principalId": "[reference(resourceId('Microsoft.Web/sites', variables('azureFuncName')), '2019-08-01', 'full').identity.principalId]"
+                "principalId": "[reference(resourceId('Microsoft.Web/sites', variables('azureFuncName')), '2019-08-01', 'full').identity.principalId]",
+                "principalType": "ServicePrincipal"
             }
         },
         {
             "type": "Microsoft.Authorization/roleAssignments",
             "apiVersion": "2022-04-01",
-            "name": "ba628617-6c19-4e1b-a892-a1fd491529d3",
+            "name": "[guid(resourceGroup().id, 'iotHubRegistryContributor')]",
             "dependsOn": [ "[resourceId('Microsoft.Web/sites', variables('azureFuncName'))]" ],
             "properties": {
                 "roleDefinitionId": "[variables('IoTHubRegistryContributor')]",
-                "principalId": "[reference(resourceId('Microsoft.Web/sites', variables('azureFuncName')), '2019-08-01', 'full').identity.principalId]"
+                "principalId": "[reference(resourceId('Microsoft.Web/sites', variables('azureFuncName')), '2019-08-01', 'full').identity.principalId]",
+                "principalType": "ServicePrincipal"
             }
         },
         {
             "type": "Microsoft.Authorization/roleAssignments",
             "apiVersion": "2022-04-01",
-            "name": "730eb609-2502-46fb-9141-5fd7ebc3fd1d",
+            "name": "[guid(resourceGroup().id, 'iotHubTwinContributor')]",
             "dependsOn": [ "[resourceId('Microsoft.Web/sites', variables('azureFuncName'))]" ],
             "properties": {
                 "roleDefinitionId": "[variables('IoTHubTwinContributor')]",
-                "principalId": "[reference(resourceId('Microsoft.Web/sites', variables('azureFuncName')), '2019-08-01', 'full').identity.principalId]"
+                "principalId": "[reference(resourceId('Microsoft.Web/sites', variables('azureFuncName')), '2019-08-01', 'full').identity.principalId]",
+                "principalType": "ServicePrincipal"
             }
         },
         {
             "type": "Microsoft.Authorization/roleAssignments",
             "apiVersion": "2022-04-01",
-            "name": "a16c08d8-d85b-4035-a8a3-e69116ae51bc",
+            "name": "[guid(resourceGroup().id, 'keyVaultSecretsUser')]",
             "dependsOn": [ "[resourceId('Microsoft.Web/sites', variables('azureFuncName'))]" ],
             "properties": {
                 "roleDefinitionId": "[variables('KeyVaultSecretsUser')]",
-                "principalId": "[reference(resourceId('Microsoft.Web/sites', variables('azureFuncName')), '2019-08-01', 'full').identity.principalId]"
+                "principalId": "[reference(resourceId('Microsoft.Web/sites', variables('azureFuncName')), '2019-08-01', 'full').identity.principalId]",
+                "principalType": "ServicePrincipal"
             }
         }
     ],
-    "outputs": {}
+    "outputs": {
+        "iotHubHostName":  
+        {
+            "type": "string",
+            "value": "[reference(resourceId('Microsoft.Devices/IoTHubs', variables('iotHubName')), '2022-04-30-preview').hostName]"
+        },
+        "iotHubName":  
+        {
+            "type": "string",
+            "value": "[variables('iotHubName')]"
+        },
+        "keyVaultName": 
+        {
+            "type": "string",
+            "value": "[variables('keyVaultName')]"
+        }
+    }
 }

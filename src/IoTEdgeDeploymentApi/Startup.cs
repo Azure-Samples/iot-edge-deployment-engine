@@ -53,9 +53,9 @@ namespace IoTEdgeDeploymentApi
 						NetworkTimeout = TimeSpan.FromSeconds(60)
 					}
 				}))
-				.AddScoped<IKeyVaultAccessor, KeyVaultAccessor>()
-				.AddScoped<IIoTEdgeDeploymentBuilder, IoTEdgeDeploymentBuilder>()
-				.AddScoped<IPolicyRegistry<string>>(_ =>
+				.AddSingleton<IKeyVaultAccessor, KeyVaultAccessor>()
+				.AddSingleton<IIoTEdgeDeploymentBuilder, IoTEdgeDeploymentBuilder>()
+				.AddSingleton<IPolicyRegistry<string>>(_ =>
 				{
 					var policyRegistry = new PolicyRegistry();
 					policyRegistry

@@ -49,8 +49,8 @@ IHost ConfigureServices(string[] args)
 					}
 				}))
 				.AddSingleton<IKeyVaultAccessor, KeyVaultAccessor>()
-				.AddScoped<IIoTEdgeDeploymentBuilder, IoTEdgeDeploymentBuilder>()
-				.AddScoped<IPolicyRegistry<string>>(_ =>
+				.AddSingleton<IIoTEdgeDeploymentBuilder, IoTEdgeDeploymentBuilder>()
+				.AddSingleton<IPolicyRegistry<string>>(_ =>
 				{
 					var policyRegistry = new PolicyRegistry();
 					policyRegistry
@@ -59,7 +59,7 @@ IHost ConfigureServices(string[] args)
 						.AddCircuitBreakerPolicy();
 					return policyRegistry;
 				})
-				.AddScoped<IIoTEdgeDeploymentBuilder, IoTEdgeDeploymentBuilder>()
+				.AddSingleton<IIoTEdgeDeploymentBuilder, IoTEdgeDeploymentBuilder>()
 				.AddSingleton<IIoTHubAccessor, IoTHubAccessor>()
 				.AddSingleton<IManifestConfig>(c => new ManifestConfig
 				{
