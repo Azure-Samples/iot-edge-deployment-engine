@@ -9,6 +9,7 @@
     "KEYVAULT_URI": "<KeyVaultUri>",
     "OpenApi__Auth__TenantId": "<Azure_Tenant_Id>",
     "OpenApi__Auth__Scope": "<App_Registration_Scope>",
+    "OpenApi__Auth__Audience": "<App_Registration_Id>",
     "OpenApi__Version": "v3",
     "FUNCTIONS_WORKER_RUNTIME": "dotnet"
   }

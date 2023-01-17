@@ -4,7 +4,7 @@
 
 - [Introduction](#introduction-at-scale-deployment)
 - [Solution](#solution)
-- [How-to](#how-to)
+- [How-to: developer setup](#developer-testing)
 
 # Introduction: At-scale Deployment
 
@@ -135,6 +135,7 @@ The deployment script creates Azure resources for running the tool locally with 
 - **Azure Key Vault** with three secrets.
 - **Azure Storage** account as required by the Azure Function.
 - Azure role assignments: your current logged in user is assigned several contributor RBAC permissions for the Azure IoT Hub and the Azure Key Vault. This is required in order to run the solution locally.
+- **Application Insights** 
 
 ## Developer step-by-step
 
@@ -184,6 +185,7 @@ This project can be found under `./src/IoTEdgeDeploymentApi`.
 - `ROOT_MANIFESTS_FOLDER` = Local absolute path to the `./manifests` folder in this repo.
 - `OpenApi__Auth__TenantId` = your AAD tenant ID
 - `OpenApi__Auth__Scope` = the name of the scope you created in Azure AD for the first app registration. Looks something like `https://xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx.fdpo.onmicrosoft.com/user_impersonation`
+- `OpenApi__Auth__Audience` = the AppId of the first app registration
 
 4. Run the function with Azure Functions tools v4.
 5. Test the function by opening the [Swagger UI][def].

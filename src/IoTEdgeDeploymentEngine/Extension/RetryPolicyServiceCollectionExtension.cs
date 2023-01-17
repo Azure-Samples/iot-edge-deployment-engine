@@ -29,7 +29,11 @@ namespace IoTEdgeDeploymentEngine.Extension
 			var policy = Policy
 				.Handle<Microsoft.Azure.Devices.Common.Exceptions.ThrottlingException>()
 				.Or<Microsoft.Azure.Devices.Common.Exceptions.IotHubThrottledException>()
-				.WaitAndRetryAsync(retryCount, retryAttempt => TimeSpan.FromSeconds(Math.Pow(2, retryAttempt)));
+				.WaitAndRetryAsync(retryCount, retryAttempt => TimeSpan.FromSeconds(Math.Pow(2, retryAttempt)), 
+				onRetry:  (exception, retryAttempt, context) =>
+				{
+					context.GetLogger()?.LogWarning($"Polly request failed, retrying (error was '{exception.Message}')");
+				});
 			policyRegistry.Add(PolicyNames.ExponentialBackoffRetryPolicy.ToString(), policy);
 
 			return policyRegistry;

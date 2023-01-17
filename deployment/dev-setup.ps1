@@ -91,9 +91,9 @@ Write-Host "ROOT_MANIFESTS_FOLDER=$defaultManifests"
 Write-Host "Below only required for local.settings.json"
 Write-Host "OpenApi__Auth__TenantId = $tenantId"
 Write-Host "OpenApi__Auth__Scope = https://$authUri/user_impersonation"
+Write-Host "OpenApi__Auth__Audience = $firstApp"
 Write-Host "============="
 
 Write-Host "Azure Resources group with all resources: '$resourceGroupName'"
-
 
 # End ===========================
