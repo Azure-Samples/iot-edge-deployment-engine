@@ -22,6 +22,8 @@ logger.LogInformation("Host created.");
 var serviceDeployment = host.Services.GetRequiredService<IIoTEdgeDeploymentBuilder>();
 await serviceDeployment.ApplyDeployments();
 
+logger.LogInformation("Done.");
+
 return;
 
 IHost ConfigureServices(string[] args)

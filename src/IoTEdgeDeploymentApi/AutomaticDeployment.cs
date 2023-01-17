@@ -4,6 +4,7 @@ using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using System.Web.Http;
 using IoTEdgeDeploymentApi.Model;
+using IoTEdgeDeploymentApi.Schema;
 using IoTEdgeDeploymentApi.Security;
 using IoTEdgeDeploymentEngine;
 using IoTEdgeDeploymentEngine.Config;
@@ -27,6 +28,7 @@ namespace IoTEdgeDeploymentApi
 		private readonly IIoTEdgeDeploymentBuilder _ioTEdgeDeploymentBuilder;
 		private readonly ILogger<AutomaticDeployment> _logger;
 		private readonly IJwtValidator _jwtValidator;
+		private readonly IDeploymentManifestValidator _validator;
 
 		/// <summary>
 		/// ctor
@@ -34,12 +36,14 @@ namespace IoTEdgeDeploymentApi
 		/// <param name="ioTEdgeDeploymentBuilder">IoTEdgeDeploymentBuilder instance per DI</param>
 		/// <param name="logger">ILogger instance per DI</param>
 		/// <param name="jwtValidator">Jwt Validator</param>
+		/// <param name="validator">Schema validator</param>
 		public AutomaticDeployment(IIoTEdgeDeploymentBuilder ioTEdgeDeploymentBuilder,
-			ILogger<AutomaticDeployment> logger, IJwtValidator jwtValidator)
+			ILogger<AutomaticDeployment> logger, IJwtValidator jwtValidator, IDeploymentManifestValidator validator)
 		{
 			_ioTEdgeDeploymentBuilder = ioTEdgeDeploymentBuilder;
 			_logger = logger;
 			_jwtValidator = jwtValidator;
+			_validator = validator;
 		}
 
 		/// <summary>
@@ -67,6 +71,10 @@ namespace IoTEdgeDeploymentApi
 
 				var requestBody = await new StreamReader(req.Body).ReadToEndAsync();
 				var data = JsonConvert.DeserializeObject<DeploymentFile>(requestBody);
+				if (!_validator.Validate(data.FileContent, out var message))
+				{
+					return new BadRequestErrorMessageResult($"Schema validation failed with the following details:\\r\\n{message}");
+				}
 
 				await _ioTEdgeDeploymentBuilder.AddDeployment(data?.FileName, data?.FileContent,
 					DeploymentCategory.AutomaticDeployment);
@@ -105,30 +113,27 @@ namespace IoTEdgeDeploymentApi
 					return new UnauthorizedObjectResult("401 - Unauthorized to call this function.");
 
 				var fileName = req.Query["fileName"];
-				if (!Regex.Match(fileName, @"^[a-z_\-\s0-9\.]+\.(json)$", RegexOptions.IgnoreCase).Success)
+				if(!Regex.Match(fileName, @"^[a-z_\-\s0-9\.]+\.(json)$", RegexOptions.IgnoreCase).Success)
 				{
-					_logger.LogError(
-						$"GetAutomaticDeploymentFileContent error: fileName is not a valid .json file name");
-					return new BadRequestErrorMessageResult(
-						$"Error: fileName '{fileName}' is not a valid .json file name");
-				}
-
-				var content =
-					await _ioTEdgeDeploymentBuilder.GetFileContent(fileName, DeploymentCategory.AutomaticDeployment);
+					_logger.LogError($"GetAutomaticDeploymentFileContent error: fileName is not a valid .json file name");
+                    return new BadRequestErrorMessageResult($"Error: fileName '{fileName}' is not a valid .json file name");
+                }
+		
+				var content = await _ioTEdgeDeploymentBuilder.GetFileContent(fileName, DeploymentCategory.AutomaticDeployment);
 				return new OkObjectResult(content);
 			}
 			catch (System.Exception ex)
 			{
-				_logger.LogError($"GetAutomaticDeploymentFileContent exception: {ex.Message}");
-				return new BadRequestErrorMessageResult(ex.Message);
+                _logger.LogError($"GetAutomaticDeploymentFileContent exception: {ex.Message}");
+                return new BadRequestErrorMessageResult(ex.Message);
 			}
 		}
 
-		/// <summary>
-		/// Applies all automatic deployments - for testing
-		/// </summary>
-		/// <param name="req">Http request</param>
-		/// <returns></returns>
+        /// <summary>
+        /// Applies all automatic deployments - for testing
+        /// </summary>
+        /// <param name="req">Http request</param>
+        /// <returns></returns>
 		[FunctionName("ApplyDeployments")]
 		[OpenApiOperation(operationId: "ApplyDeployments", tags: new[] { "IoTEdgeAutomaticDeployment" })]
 		[OpenApiSecurity("implicit_auth", SecuritySchemeType.OAuth2, Flows = typeof(ImplicitAuthFlow))]

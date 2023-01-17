@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Collections.Immutable;
 using System.IO;
 using IoTEdgeDeploymentApi;
 using IoTEdgeDeploymentEngine;
@@ -16,6 +15,7 @@ using OpenApiHttpTriggerAuthorization = IoTEdgeDeploymentApi.Security.OpenApiHtt
 using Azure.Core;
 using Azure.Identity;
 using Azure.Security.KeyVault.Secrets;
+using IoTEdgeDeploymentApi.Schema;
 using IoTEdgeDeploymentApi.Security;
 using IoTEdgeDeploymentEngine.Extension;
 using Polly.Registry;
@@ -57,6 +57,7 @@ namespace IoTEdgeDeploymentApi
 				.AddSingleton<IKeyVaultAccessor, KeyVaultAccessor>()
 				.AddSingleton<IIoTEdgeDeploymentBuilder, IoTEdgeDeploymentBuilder>()
 				.AddSingleton<IJwtValidator, JwtValidator>()
+				.AddSingleton<IDeploymentManifestValidator, DeploymentManifestValidator>()
 				.AddSingleton<IPolicyRegistry<string>>(_ =>
 				{
 					var policyRegistry = new PolicyRegistry();

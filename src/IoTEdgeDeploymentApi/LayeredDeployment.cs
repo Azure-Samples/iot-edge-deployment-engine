@@ -4,6 +4,7 @@ using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using System.Web.Http;
 using IoTEdgeDeploymentApi.Model;
+using IoTEdgeDeploymentApi.Schema;
 using IoTEdgeDeploymentApi.Security;
 using IoTEdgeDeploymentEngine;
 using IoTEdgeDeploymentEngine.Config;
@@ -27,6 +28,9 @@ namespace IoTEdgeDeploymentApi
 		private readonly IIoTEdgeDeploymentBuilder _ioTEdgeDeploymentBuilder;
 		private readonly ILogger<LayeredDeployment> _logger;
 		private readonly IJwtValidator _jwtValidator;
+		private readonly IDeploymentManifestValidator _validator;
+
+		private bool HasValidSchema { get; set; }
 
 		/// <summary>
 		/// ctor
@@ -34,12 +38,14 @@ namespace IoTEdgeDeploymentApi
 		/// <param name="ioTEdgeDeploymentBuilder">IoTEdgeDeploymentBuilder instance per DI</param>
 		/// <param name="logger">ILogger instance per DI</param>
 		/// <param name="jwtValidator">Jwt Validator</param>
+		/// <param name="validator">Schema validator</param>
 		public LayeredDeployment(IIoTEdgeDeploymentBuilder ioTEdgeDeploymentBuilder, ILogger<LayeredDeployment> logger,
-			IJwtValidator jwtValidator)
+			IJwtValidator jwtValidator, IDeploymentManifestValidator validator)
 		{
 			_ioTEdgeDeploymentBuilder = ioTEdgeDeploymentBuilder;
 			_logger = logger;
 			_jwtValidator = jwtValidator;
+			_validator = validator;
 		}
 
 		/// <summary>
@@ -67,7 +73,11 @@ namespace IoTEdgeDeploymentApi
 
 				var requestBody = await new StreamReader(req.Body).ReadToEndAsync();
 				var data = JsonConvert.DeserializeObject<DeploymentFile>(requestBody);
-
+				if (!_validator.Validate(data.FileContent, out var message))
+				{
+					return new BadRequestErrorMessageResult($"Schema validation failed with the following errors - {message}");
+				}
+				
 				await _ioTEdgeDeploymentBuilder.AddDeployment(data?.FileName, data?.FileContent,
 					DeploymentCategory.LayeredDeployment);
 
@@ -103,21 +113,19 @@ namespace IoTEdgeDeploymentApi
 					return new UnauthorizedObjectResult("401 - Unauthorized to call this function.");
 				
 				var fileName = req.Query["fileName"];
-				if (!Regex.Match(fileName, @"^[a-z_\-\s0-9\.]+\.(json)$", RegexOptions.IgnoreCase).Success)
+				if(!Regex.Match(fileName, @"^[a-z_\-\s0-9\.]+\.(json)$", RegexOptions.IgnoreCase).Success)
 				{
 					_logger.LogError($"GetLayeredDeploymentFileContent error: fileName is not a valid .json file name");
-					return new BadRequestErrorMessageResult(
-						$"Error: fileName '{fileName}' is not a valid .json file name");
+                	return new BadRequestErrorMessageResult($"Error: fileName '{fileName}' is not a valid .json file name"); 
 				}
-
-				var content =
-					await _ioTEdgeDeploymentBuilder.GetFileContent(fileName, DeploymentCategory.LayeredDeployment);
+				
+				var content = await _ioTEdgeDeploymentBuilder.GetFileContent(fileName, DeploymentCategory.LayeredDeployment);
 				return new OkObjectResult(content);
 			}
 			catch (System.Exception ex)
 			{
-				_logger.LogError($"GetLayeredDeploymentFileContent exception: {ex.Message}");
-				return new BadRequestErrorMessageResult(ex.Message);
+                _logger.LogError($"GetLayeredDeploymentFileContent exception: {ex.Message}");
+                return new BadRequestErrorMessageResult(ex.Message);
 			}
 		}
 	}

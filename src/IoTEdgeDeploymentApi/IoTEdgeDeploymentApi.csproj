@@ -13,6 +13,7 @@
   <ItemGroup>
     <PackageReference Include="Azure.Core" Version="1.26.0" />
     <PackageReference Include="Azure.Identity" Version="1.8.0" />
+    <PackageReference Include="JsonSchema.Net" Version="3.3.2" />
     <PackageReference Include="Microsoft.Extensions.Logging" Version="6.0.0" />
     <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="6.0.0" />
     <PackageReference Include="Microsoft.Identity.Client" Version="4.49.1" />
@@ -30,6 +31,9 @@
     <None Remove="Microsoft.Azure.WebJobs.Extensions.OpenApi" />
     <None Remove="Microsoft.Azure.Devices" />
     <None Remove="Models\" />
+    <None Update="Schema\DeploymentManifestSchema.json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
   </ItemGroup>
   <ItemGroup>
     <None Update="host.json">
