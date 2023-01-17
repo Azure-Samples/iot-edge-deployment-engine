@@ -65,15 +65,23 @@ namespace IoTEdgeDeploymentEngine
 		{
 			if (!assignment.Value.Any(a => a.Category == DeploymentCategory.AutomaticDeployment))
 			{
-				_logger.LogWarning($"ProcessDeviceAssignment - no Automatic (base) deployment found matching device '{assignment.Key}'. Skipping this assignment.");
-                return;
+				_logger.LogWarning(
+					$"ProcessDeviceAssignment - no Automatic (base) deployment found matching device '{assignment.Key}'. Skipping this assignment.");
+				return;
 			}
 
 			//https://learn.microsoft.com/en-us/azure/iot-edge/module-deployment-monitoring?view=iotedge-1.4#layered-deployment
 			//layered deployments must have higher priority than the automatic deployment with highest priority
 			var lowestPrio = assignment.Value.Where(a => a.Category == DeploymentCategory.AutomaticDeployment)
 				.Max(a => a.Priority);
-			var ordered = assignment.Value.Where(a => a.Priority >= lowestPrio).OrderBy(a => a.Priority).ToArray();
+			var firstCreatedTimeStamp = assignment.Value
+				.Where(a => a.Category == DeploymentCategory.AutomaticDeployment && a.Priority == lowestPrio)
+				.OrderBy(a => a.ManifestConfig.CreatedTimeUtc).FirstOrDefault()?.ManifestConfig.CreatedTimeUtc;
+			var ordered = assignment.Value.Where(a =>
+					(a.Priority >= lowestPrio && a.Category == DeploymentCategory.LayeredDeployment) ||
+					(a.Priority >= lowestPrio && a.ManifestConfig.CreatedTimeUtc == firstCreatedTimeStamp &&
+					 a.Category == DeploymentCategory.AutomaticDeployment)).OrderBy(a => a.Priority)
+				.ThenBy(a => a.ManifestConfig.CreatedTimeUtc).ToArray();
 
 			var edgeAgentModules = ordered.GetEdgeAgentModules().ToArray();
 			var edgeHubProps = ordered.GetEdgeHubProps().ToArray();
@@ -107,17 +115,17 @@ namespace IoTEdgeDeploymentEngine
 				});
 			}
 
-			try 
+			try
 			{
-                _logger.LogInformation($"ProcessDeviceAssignment - Applying configuration for device '{assignment.Key}'");
-                await _ioTHubAccessor.ApplyDeploymentPerDevice(assignment.Key, configurationContent);
-            }
-			catch (Exception ex) 
+				_logger.LogInformation(
+					$"ProcessDeviceAssignment - Applying configuration for device '{assignment.Key}'");
+				await _ioTHubAccessor.ApplyDeploymentPerDevice(assignment.Key, configurationContent);
+			}
+			catch (Exception ex)
 			{
 				_logger.LogError($"ProcessDeviceAssignment - Error applying deployment to device: {ex.Message}");
 			}
-
-        }
+		}
 
 		private async Task<Dictionary<string, List<DeploymentConfig>>> CreateDeviceDeploymentAssignments(
 			Dictionary<string, Configuration> files)

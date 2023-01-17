@@ -186,6 +186,10 @@
                             "value": "[concat('https://', parameters('appId'), '.fdpo.onmicrosoft.com/user_impersonation')]"
                         },
                         {
+                            "name": "OpenApi__Auth__Audience",
+                            "value": "[parameters('appId')]"
+                        },
+                        {
                             "name": "OpenApi__Version",
                             "value": "v3"
                         },

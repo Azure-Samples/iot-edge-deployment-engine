@@ -26,16 +26,20 @@ namespace IoTEdgeDeploymentApi
 	{
 		private readonly IIoTEdgeDeploymentBuilder _ioTEdgeDeploymentBuilder;
 		private readonly ILogger<LayeredDeployment> _logger;
+		private readonly IJwtValidator _jwtValidator;
 
 		/// <summary>
 		/// ctor
 		/// </summary>
 		/// <param name="ioTEdgeDeploymentBuilder">IoTEdgeDeploymentBuilder instance per DI</param>
 		/// <param name="logger">ILogger instance per DI</param>
-		public LayeredDeployment(IIoTEdgeDeploymentBuilder ioTEdgeDeploymentBuilder, ILogger<LayeredDeployment> logger)
+		/// <param name="jwtValidator">Jwt Validator</param>
+		public LayeredDeployment(IIoTEdgeDeploymentBuilder ioTEdgeDeploymentBuilder, ILogger<LayeredDeployment> logger,
+			IJwtValidator jwtValidator)
 		{
 			_ioTEdgeDeploymentBuilder = ioTEdgeDeploymentBuilder;
 			_logger = logger;
+			_jwtValidator = jwtValidator;
 		}
 
 		/// <summary>
@@ -58,6 +62,9 @@ namespace IoTEdgeDeploymentApi
 		{
 			try
 			{
+				if (null == _jwtValidator.Validate(req.Headers["Authorization"].ToString()))
+					return new UnauthorizedObjectResult("401 - Unauthorized to call this function.");
+
 				var requestBody = await new StreamReader(req.Body).ReadToEndAsync();
 				var data = JsonConvert.DeserializeObject<DeploymentFile>(requestBody);
 
@@ -92,20 +99,25 @@ namespace IoTEdgeDeploymentApi
 		{
 			try
 			{
+				if (null == _jwtValidator.Validate(req.Headers["Authorization"].ToString()))
+					return new UnauthorizedObjectResult("401 - Unauthorized to call this function.");
+				
 				var fileName = req.Query["fileName"];
-				if(!Regex.Match(fileName, @"^[a-z_\-\s0-9\.]+\.(json)$", RegexOptions.IgnoreCase).Success)
+				if (!Regex.Match(fileName, @"^[a-z_\-\s0-9\.]+\.(json)$", RegexOptions.IgnoreCase).Success)
 				{
 					_logger.LogError($"GetLayeredDeploymentFileContent error: fileName is not a valid .json file name");
-                	return new BadRequestErrorMessageResult($"Error: fileName '{fileName}' is not a valid .json file name"); 
+					return new BadRequestErrorMessageResult(
+						$"Error: fileName '{fileName}' is not a valid .json file name");
 				}
-				
-				var content = await _ioTEdgeDeploymentBuilder.GetFileContent(fileName, DeploymentCategory.LayeredDeployment);
+
+				var content =
+					await _ioTEdgeDeploymentBuilder.GetFileContent(fileName, DeploymentCategory.LayeredDeployment);
 				return new OkObjectResult(content);
 			}
 			catch (System.Exception ex)
 			{
-                _logger.LogError($"GetLayeredDeploymentFileContent exception: {ex.Message}");
-                return new BadRequestErrorMessageResult(ex.Message);
+				_logger.LogError($"GetLayeredDeploymentFileContent exception: {ex.Message}");
+				return new BadRequestErrorMessageResult(ex.Message);
 			}
 		}
 	}

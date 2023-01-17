@@ -16,6 +16,7 @@ using OpenApiHttpTriggerAuthorization = IoTEdgeDeploymentApi.Security.OpenApiHtt
 using Azure.Core;
 using Azure.Identity;
 using Azure.Security.KeyVault.Secrets;
+using IoTEdgeDeploymentApi.Security;
 using IoTEdgeDeploymentEngine.Extension;
 using Polly.Registry;
 
@@ -55,6 +56,7 @@ namespace IoTEdgeDeploymentApi
 				}))
 				.AddSingleton<IKeyVaultAccessor, KeyVaultAccessor>()
 				.AddSingleton<IIoTEdgeDeploymentBuilder, IoTEdgeDeploymentBuilder>()
+				.AddSingleton<IJwtValidator, JwtValidator>()
 				.AddSingleton<IPolicyRegistry<string>>(_ =>
 				{
 					var policyRegistry = new PolicyRegistry();
