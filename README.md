@@ -5,11 +5,12 @@
 - [Introduction](#introduction-at-scale-deployment)
 - [Solution](#solution)
 - [How-to: developer setup](#developer-testing)
+- [Azure Pipelines CI/CD setup](#azure-pipelines-cicd-setup)
 
 # Introduction: At-scale Deployment
 
-Azure IoT Edge provides two ways of [deployments](https://learn.microsoft.com/en-us/azure/iot-edge/module-deployment-monitoring?view=iotedge-1.4).
-On the hand you can create a deployment manifest to deploy modules and apply it to one single device.
+Azure IoT Edge provides two approaches for [deployments](https://learn.microsoft.com/en-us/azure/iot-edge/module-deployment-monitoring?view=iotedge-1.4).
+On the one hand you can create a per-device deployment manifest to deploy modules and apply it to one single device.
 On the other hand you can create a deployment manifest with a tag based filter and modules get applied to the registered devices that matches the defined condition.
 The latter one contains automatic deployments where the deployments of the higher priority are only applied to the devices with the same tag(s)
 and layered deployment where modules and routes are consolidated between different deployment definitions for the same devices based by higher priority.
@@ -78,11 +79,19 @@ graph TD
   F --> |YES| H["Consolidated automatic and<br>layered deployments get applied"];
 ```
 
+### Azure Key Vault for secret placeholder replacement
+
+The automatic and layered `.json` files can make use of secret replacement via Azure Key Vault. This prevents secrets from being committed to the Git repo.
+
+To replace secrets, usage of this form is supported `{{secret_name}}`.
+- The secret name as defined between the double `{{` and `}}` needs to exist in the Key Vault.
+- The replacement can happen anywhere within the file and is applied before the final merging happens in memory.
+
 ## Azure Function: IoTEdgeDeploymentApi
 
 ### Overview
 
-Provides API and scheduler functionalities to manage the engine.
+Azure Function which provides API and scheduler functionalities to manage the engine.
 Swagger UI is fully supported and can be opened via the following [URL][def].
 
 ### Security
@@ -103,6 +112,7 @@ Provides the following endpoints:
 
 - submit a new automatic deployment manifest to be stored
 - retrieve deployment manifest file content by a specified file path
+- apply all deployments on a per device single deployment basis
 
 ### DeploymentScheduler
 
@@ -135,7 +145,7 @@ The deployment script creates Azure resources for running the tool locally with 
 - **Azure Key Vault** with three secrets.
 - **Azure Storage** account as required by the Azure Function.
 - Azure role assignments: your current logged in user is assigned several contributor RBAC permissions for the Azure IoT Hub and the Azure Key Vault. This is required in order to run the solution locally.
-- **Application Insights** 
+- **Application Insights** account for Azure Functions monitoring.
 
 ## Developer step-by-step
 
@@ -235,8 +245,6 @@ On the cloud based Azure Function endpoint you have two options:
 
 If you want to add different authentication flows, please read the [open api auth docs](https://github.com/Azure/azure-functions-openapi-extension/blob/8cb58af111928088b4f6c07fdf482f6ee5bdf59d/docs/openapi-auth.md) and refer to the [authentication sample repo for Swagger](https://github.com/devkimchi/azure-functions-oauth-authentications-via-swagger-ui).
 
-
-
 ## How to clean-up Azure resources
 
 To clean-up all provisioned Azure resources you can use a convinience script that will delete the entire Azure Resource Group and the Azure AD Application registrations.
@@ -248,6 +256,12 @@ To clean-up all provisioned Azure resources you can use a convinience script tha
   ./clean-dev-setup.ps1 -resourcesPrefix <yourprefix>
   ```
 2. You will be prompted to confirm deletion. This can take a few minutes.
+
+
+## Azure Pipelines CI/CD setup
+
+One option for running reconciliation to the IoT Edge devices based on a set of manifest files, is to add this as part of the CI/CD flow.
+Please see [Azure DevOps Pipelines: setting up a pipeline with IoTEdgeDeployment Engine to trigger deployments](docs/azdevops.md) for a walkthrough.
 
 [def]: http://localhost:7071/api/swagger/ui
 [def2]: /.github/workflows/CD_Infra.yml
