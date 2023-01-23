@@ -6,6 +6,7 @@
 - [Solution](#solution)
 - [How-to: developer setup](#developer-testing)
 - [Azure Pipelines CI/CD setup](#azure-pipelines-cicd-setup)
+- [A few notes on performance](#a-few-notes-on-performance)
 
 # Introduction: At-scale Deployment
 
@@ -262,6 +263,10 @@ To clean-up all provisioned Azure resources you can use a convinience script tha
 
 One option for running reconciliation to the IoT Edge devices based on a set of manifest files, is to add this as part of the CI/CD flow.
 Please see [Azure DevOps Pipelines: setting up a pipeline with IoTEdgeDeployment Engine to trigger deployments](docs/azdevops.md) for a walkthrough.
+
+## A few notes on performance
+
+The performance of the engine while running and applying deployments has been evaluated. You can find some of our findings and recommendations [here](docs/iothubperf.md).
 
 [def]: http://localhost:7071/api/swagger/ui
 [def2]: /.github/workflows/CD_Infra.yml
