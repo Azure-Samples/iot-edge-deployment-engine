@@ -16,46 +16,6 @@ namespace IoTEdgeDeploymentEngine.Extension
 		private const string RouteKey = "route";
 
 		/// <summary>
-		/// Gets the edgeAgents modules specification from ModulesContent
-		/// </summary>
-		/// <param name="deploymentConfigs">Set of deployments for single device</param>
-		/// <returns></returns>
-		public static IEnumerable<KeyValuePair<string, object>> GetEdgeAgentModules(
-			this IEnumerable<DeploymentConfig> deploymentConfigs)
-		{
-			return deploymentConfigs.Where(c => c.ManifestConfig.Content.ModulesContent.ContainsKey("$edgeAgent"))
-				.SelectMany(c => c.ManifestConfig.Content.ModulesContent["$edgeAgent"])
-				.Distinct(new KeyValuePairEqualComparer());
-		}
-
-		/// <summary>
-		/// Gets the edgeHub properties specification from ModulesContent
-		/// </summary>
-		/// <param name="deploymentConfigs">Set of deployments for single device</param>
-		/// <returns></returns>
-		public static IEnumerable<KeyValuePair<string, object>> GetEdgeHubProps(
-			this IEnumerable<DeploymentConfig> deploymentConfigs)
-		{
-			return deploymentConfigs.Where(c => c.ManifestConfig.Content.ModulesContent.ContainsKey("$edgeHub"))
-				.SelectMany(c => c.ManifestConfig.Content.ModulesContent["$edgeHub"])
-				.Distinct(new KeyValuePairEqualComparer());
-		}
-
-		/// <summary>
-		/// Gets the edgeAgents modules specification from ModulesContent
-		/// </summary>
-		/// <param name="deploymentConfigs">Set of deployments for single device</param>
-		/// <returns></returns>
-		public static IEnumerable<KeyValuePair<string, IDictionary<string, object>>> GetOuterModules(
-			this IEnumerable<DeploymentConfig> deploymentConfigs)
-		{
-			return deploymentConfigs
-				.SelectMany(c =>
-					c.ManifestConfig.Content.ModulesContent.Where(m => m.Key != "$edgeAgent" && m.Key != "$edgeHub"))
-				.Distinct(new KeyValuePairDictionaryEqualComparer());
-		}
-		
-				/// <summary>
 		/// Reads edgeAgents module specification
 		/// </summary>
 		/// <param name="edgeAgentModules">Modules content of edgeAgent specification</param>
@@ -87,16 +47,22 @@ namespace IoTEdgeDeploymentEngine.Extension
 					}
 				}
 
-				if (null == mod) 
+				if (null == mod)
+					continue;
+
+				var envVars = mod?.Env?.Select(e => new EnvironmentVariable(e.Key, e.Value.Value)).ToList();
+
+				if (modulesSpec.Any(m => m.Name == moduleName))
 					continue;
 				
-				var envVars = mod?.Env?.Select(e => new EnvironmentVariable(e.Key, e.Value.Value)).ToList();
 				modulesSpec.Add(new EdgeModuleSpecification(moduleName,
 					mod?.Settings?.Image, "1.0",
 					string.IsNullOrEmpty(mod?.RestartPolicy)
 						? RestartPolicy.Always
 						: Enum.Parse<RestartPolicy>(mod?.RestartPolicy, true),
-					mod?.Settings?.CreateOptions == null ? string.Empty : JsonConvert.SerializeObject(mod.Settings.CreateOptions),
+					mod?.Settings?.CreateOptions == null
+						? string.Empty
+						: JsonConvert.SerializeObject(mod.Settings.CreateOptions),
 					string.IsNullOrEmpty(mod?.Status)
 						? ModuleStatus.Running
 						: Enum.Parse<ModuleStatus>(mod?.Status, true),
@@ -132,7 +98,9 @@ namespace IoTEdgeDeploymentEngine.Extension
 						string.IsNullOrEmpty(mod?.RestartPolicy)
 							? RestartPolicy.Always
 							: Enum.Parse<RestartPolicy>(mod?.RestartPolicy, true),
-						mod?.Settings?.CreateOptions == null ? string.Empty : JsonConvert.SerializeObject(mod.Settings.CreateOptions),
+						mod?.Settings?.CreateOptions == null
+							? string.Empty
+							: JsonConvert.SerializeObject(mod.Settings.CreateOptions),
 						string.IsNullOrEmpty(mod?.Status)
 							? ModuleStatus.Running
 							: Enum.Parse<ModuleStatus>(mod?.Status, true),
@@ -180,13 +148,14 @@ namespace IoTEdgeDeploymentEngine.Extension
 
 			return flattenedRoutes;
 		}
-		
+
 		/// <summary>
 		/// Reads edgeAgent module settings and returns RegistryCredentials
 		/// </summary>
 		/// <param name="edgeAgentModules">Modules content of edgeAgent specification</param>
 		/// <returns></returns>
-		public static IEnumerable<RegistryCredential> GetEdgeAgentRegCreds(this IEnumerable<KeyValuePair<string, object>> edgeAgentModules)
+		public static IEnumerable<RegistryCredential> GetEdgeAgentRegCreds(
+			this IEnumerable<KeyValuePair<string, object>> edgeAgentModules)
 		{
 			foreach (var edgeAgentModule in edgeAgentModules)
 			{
@@ -227,6 +196,46 @@ namespace IoTEdgeDeploymentEngine.Extension
 			}
 
 			return string.Empty;
+		}
+		
+		/// <summary>
+		/// Selects first item per key in a sequence and returns those distinct KeyValuePairs
+		/// </summary>
+		/// <param name="source">Source enumeration</param>
+		/// <returns></returns>
+		public static IEnumerable<KeyValuePair<string, object>> FirstPerKey(
+			this IEnumerable<KeyValuePair<string, object>> source)
+		{
+			var retVal = new List<KeyValuePair<string, object>>();
+
+			foreach (var ordered in source)
+			{
+				if (retVal.Any(r => r.Key == ordered.Key))
+					continue;
+				retVal.Add(ordered);
+			}
+
+			return retVal;
+		}
+		
+		/// <summary>
+		/// Selects first item per key in a sequence and returns those distinct KeyValuePairs
+		/// </summary>
+		/// <param name="source">Source enumeration</param>
+		/// <returns></returns>
+		public static IEnumerable<KeyValuePair<string, IDictionary<string, object>>> FirstPerKey(
+			this IEnumerable<KeyValuePair<string, IDictionary<string, object>>> source)
+		{
+			var retVal = new List<KeyValuePair<string, IDictionary<string, object>>>();
+
+			foreach (var ordered in source)
+			{
+				if (retVal.Any(r => r.Key == ordered.Key))
+					continue;
+				retVal.Add(ordered);
+			}
+
+			return retVal;
 		}
 	}
 }

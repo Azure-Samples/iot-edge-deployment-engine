@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 using IoTEdgeDeploymentEngine.Accessor;
 using IoTEdgeDeploymentEngine.Config;
 using IoTEdgeDeploymentEngine.Extension;
-using IoTEdgeDeploymentEngine.Util;
+using IoTEdgeDeploymentEngine.Logic;
 using Microsoft.Azure.Devices;
 using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
@@ -22,24 +22,21 @@ namespace IoTEdgeDeploymentEngine
 		private readonly IIoTHubAccessor _ioTHubAccessor;
 		private readonly IKeyVaultAccessor _keyVaultAccessor;
 		private readonly IManifestConfig _manifestConfig;
+		private readonly IModuleLogic _moduleLogic;
 		private readonly ILogger<IoTEdgeDeploymentBuilder> _logger;
 
 		private const string SecretNameRegEx = "{{(?<secretName>[^}]*)";
-
-		// / <summary>
-		// / Returns path for deployment manifest files
-		// / </summary>
-		// protected abstract string ManifestDirectory { get; }
 
 		/// <summary>
 		/// ctor
 		/// </summary>
 		public IoTEdgeDeploymentBuilder(IIoTHubAccessor ioTHubAccessor, IKeyVaultAccessor keyVaultAccessor,
-			IManifestConfig manifestConfig, ILogger<IoTEdgeDeploymentBuilder> logger)
+			IManifestConfig manifestConfig, IModuleLogic moduleLogic, ILogger<IoTEdgeDeploymentBuilder> logger)
 		{
 			_ioTHubAccessor = ioTHubAccessor;
 			_keyVaultAccessor = keyVaultAccessor;
 			_manifestConfig = manifestConfig;
+			_moduleLogic = moduleLogic;
 			_logger = logger;
 		}
 
@@ -52,39 +49,19 @@ namespace IoTEdgeDeploymentEngine
 
 			var assignments = await CreateDeviceDeploymentAssignments(files);
 
-			var tasks = new List<Task>();
-			foreach (var assignment in assignments)
-			{
-				tasks.Add(ProcessDeviceAssignment(assignment));
-			}
+			var tasks = assignments.Select(ProcessDeviceAssignment).ToList();
 
 			await Task.WhenAll(tasks);
 		}
 
 		private async Task ProcessDeviceAssignment(KeyValuePair<string, List<DeploymentConfig>> assignment)
 		{
-			if (!assignment.Value.Any(a => a.Category == DeploymentCategory.AutomaticDeployment))
-			{
-				_logger.LogWarning(
-					$"ProcessDeviceAssignment - no Automatic (base) deployment found matching device '{assignment.Key}'. Skipping this assignment.");
+			var deployments = _moduleLogic.SelectDeployments(assignment).ToArray();
+			if (!deployments.Any())
 				return;
-			}
 
-			//https://learn.microsoft.com/en-us/azure/iot-edge/module-deployment-monitoring?view=iotedge-1.4#layered-deployment
-			//layered deployments must have higher priority than the automatic deployment with highest priority
-			var lowestPrio = assignment.Value.Where(a => a.Category == DeploymentCategory.AutomaticDeployment)
-				.Max(a => a.Priority);
-			var firstCreatedTimeStamp = assignment.Value
-				.Where(a => a.Category == DeploymentCategory.AutomaticDeployment && a.Priority == lowestPrio)
-				.OrderBy(a => a.ManifestConfig.CreatedTimeUtc).FirstOrDefault()?.ManifestConfig.CreatedTimeUtc;
-			var ordered = assignment.Value.Where(a =>
-					(a.Priority >= lowestPrio && a.Category == DeploymentCategory.LayeredDeployment) ||
-					(a.Priority >= lowestPrio && a.ManifestConfig.CreatedTimeUtc == firstCreatedTimeStamp &&
-					 a.Category == DeploymentCategory.AutomaticDeployment)).OrderBy(a => a.Priority)
-				.ThenBy(a => a.ManifestConfig.CreatedTimeUtc).ToArray();
-
-			var edgeAgentModules = ordered.GetEdgeAgentModules().ToArray();
-			var edgeHubProps = ordered.GetEdgeHubProps().ToArray();
+			var edgeAgentModules = _moduleLogic.GetEdgeAgentModules(deployments).ToArray();
+			var edgeHubProps = _moduleLogic.GetEdgeHubProps(deployments).ToArray();
 			var edgeAgentDesiredProperties = new EdgeAgentDesiredProperties()
 			{
 				SystemModuleVersion = edgeAgentModules.GetEdgeAgentSchemaVersion(),
@@ -102,7 +79,7 @@ namespace IoTEdgeDeploymentEngine
 				.SetEdgeHub(edgeHubConfig)
 				.SetEdgeAgent(edgeAgentDesiredProperties);
 
-			var outerModules = ordered.GetOuterModules();
+			var outerModules = _moduleLogic.GetOuterModules(deployments);
 			foreach (var outerModule in outerModules)
 			{
 				if (!outerModule.Value.ContainsKey("properties.desired"))

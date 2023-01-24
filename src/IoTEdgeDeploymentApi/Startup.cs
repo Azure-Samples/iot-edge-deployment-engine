@@ -18,6 +18,8 @@ using Azure.Security.KeyVault.Secrets;
 using IoTEdgeDeploymentApi.Schema;
 using IoTEdgeDeploymentApi.Security;
 using IoTEdgeDeploymentEngine.Extension;
+using IoTEdgeDeploymentEngine.Logic;
+using IoTEdgeDeploymentEngine.Util;
 using Polly.Registry;
 
 [assembly: FunctionsStartup(typeof(Startup))]
@@ -33,8 +35,8 @@ namespace IoTEdgeDeploymentApi
 			var rootDirectory = Environment.GetEnvironmentVariable("ROOT_MANIFESTS_FOLDER");
 			var iotHubHostname = Environment.GetEnvironmentVariable("IOTHUB_HOSTNAME");
 			var keyVaultUri = Environment.GetEnvironmentVariable("KEYVAULT_URI");
-			string rootDirectoryAutomatic = Path.Combine(rootDirectory, "AutomaticDeployment");
-			string rootDirectoryLayered = Path.Combine(rootDirectory, "LayeredDeployment");
+			var rootDirectoryAutomatic = Path.Combine(rootDirectory, "AutomaticDeployment");
+			var rootDirectoryLayered = Path.Combine(rootDirectory, "LayeredDeployment");
 			CreateManifestSubFolders(rootDirectoryAutomatic);
 			CreateManifestSubFolders(rootDirectoryLayered);
 
@@ -43,18 +45,24 @@ namespace IoTEdgeDeploymentApi
 			builder.Services
 				.AddSingleton<RegistryManager>((s) =>
 					RegistryManager.Create(iotHubHostname, tokenCredential))
-				.AddSingleton<SecretClient>((s) => new SecretClient(new Uri(keyVaultUri), tokenCredential, new SecretClientOptions()
+				.AddSingleton<IKeyVaultAccessor>(_ =>
 				{
-					Retry = 
-					{
-						MaxRetries = 3,
-						Delay = TimeSpan.FromSeconds(5),
-						MaxDelay = TimeSpan.FromSeconds(15),
-						Mode = RetryMode.Exponential,
-						NetworkTimeout = TimeSpan.FromSeconds(60)
-					}
-				}))
-				.AddSingleton<IKeyVaultAccessor, KeyVaultAccessor>()
+					if (string.IsNullOrEmpty(keyVaultUri))
+						return new KeyVaultAccessor(null);
+					
+					return new KeyVaultAccessor(new SecretClient(new Uri(keyVaultUri),
+						tokenCredential, new SecretClientOptions()
+						{
+							Retry =
+							{
+								MaxRetries = 3,
+								Delay = TimeSpan.FromSeconds(5),
+								MaxDelay = TimeSpan.FromSeconds(15),
+								Mode = RetryMode.Exponential,
+								NetworkTimeout = TimeSpan.FromSeconds(60)
+							}
+						}));
+				})
 				.AddSingleton<IIoTEdgeDeploymentBuilder, IoTEdgeDeploymentBuilder>()
 				.AddSingleton<IJwtValidator, JwtValidator>()
 				.AddSingleton<IDeploymentManifestValidator, DeploymentManifestValidator>()
@@ -68,6 +76,7 @@ namespace IoTEdgeDeploymentApi
 					return policyRegistry;
 				})
 				.AddSingleton<IIoTHubAccessor, IoTHubAccessor>()
+				.AddSingleton<IModuleLogic, ModuleLogic>()
 				.AddSingleton<IManifestConfig>(c => new ManifestConfig
 				{
 					DirectoryRootAutomatic = rootDirectoryAutomatic,

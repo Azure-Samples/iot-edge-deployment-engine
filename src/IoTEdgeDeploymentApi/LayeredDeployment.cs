@@ -30,8 +30,6 @@ namespace IoTEdgeDeploymentApi
 		private readonly IJwtValidator _jwtValidator;
 		private readonly IDeploymentManifestValidator _validator;
 
-		private bool HasValidSchema { get; set; }
-
 		/// <summary>
 		/// ctor
 		/// </summary>

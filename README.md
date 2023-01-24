@@ -7,6 +7,7 @@
 - [How-to: developer setup](#developer-testing)
 - [Azure Pipelines CI/CD setup](#azure-pipelines-cicd-setup)
 - [A few notes on performance](#a-few-notes-on-performance)
+- [Loosely Coupled Logic](#loosely-coupled-logic)
 
 # Introduction: At-scale Deployment
 
@@ -77,7 +78,7 @@ graph TD
   C -->|Yes| E[Check layered deployment priority];
   E --> F{"Layered deployment priority<br>greater than<br>automatic deployment priority"};
   F -->|No| G[Only automatic deployment gets applied];
-  F --> |YES| H["Consolidated automatic and<br>layered deployments get applied"];
+  F --> |Yes<br>Based on higher Priority and CreatedTime<br> for same modules| H["Consolidated automatic and<br>layered deployments get applied<br>"];
 ```
 
 ### Azure Key Vault for secret placeholder replacement
@@ -85,6 +86,7 @@ graph TD
 The automatic and layered `.json` files can make use of secret replacement via Azure Key Vault. This prevents secrets from being committed to the Git repo.
 
 To replace secrets, usage of this form is supported `{{secret_name}}`.
+
 - The secret name as defined between the double `{{` and `}}` needs to exist in the Key Vault.
 - The replacement can happen anywhere within the file and is applied before the final merging happens in memory.
 
@@ -136,6 +138,7 @@ A simple console application that can test the engine on your developer environm
 ## What resources get created
 
 The deployment script creates Azure resources for running the tool locally with a few cloud components:
+
 - **Azure Resource Group** to hold the resources.
 - **Azure IoT Hub** with two IoT Edge devices provisioned.
 - **Azure Function** and Service Plan, although not required for local testing it prepares the system for tesing the Azure Function remotely.
@@ -161,8 +164,9 @@ The deployment script creates Azure resources for running the tool locally with 
   ```
 
 3. Run the deployment script where the following arguments should be supplied:
-  - `resourcesPrefix` - a short prefix of 6 to 8 characters, unique enough to ensure the resource names don't already exist. 
-  - `tenantName` - your current tenant for configuring App registrations. This will be used to further concatenate to the full tenant URI like `mytentant.onmicrosoft.com`.
+
+- `resourcesPrefix` - a short prefix of 6 to 8 characters, unique enough to ensure the resource names don't already exist.
+- `tenantName` - your current tenant for configuring App registrations. This will be used to further concatenate to the full tenant URI like `mytentant.onmicrosoft.com`.
 
   ```powershell
   ./dev-setup.ps1 -resourcesPrefix <yourprefix> -tenantName <tenantname>
@@ -177,12 +181,12 @@ This project can be found under `./src/IoTEdgeDeploymentTester`.
 1. Create a `.env` file based on the `.env.template` file in the project folder.
 2. Supply the following values:
 
-  - `IOTHUB_HOSTNAME` = IoT Hub hostname in the form of `xxx.azure-devices.net`.
-  - `KEYVAULT_URI` = Key Vault URI including `https://` prefix.
-  - `ROOT_MANIFESTS_FOLDER` = absolute path to the `./manifests` folder in this repo.
+- `IOTHUB_HOSTNAME` = IoT Hub hostname in the form of `xxx.azure-devices.net`.
+- `KEYVAULT_URI` = Key Vault URI including `https://` prefix.
+- `ROOT_MANIFESTS_FOLDER` = absolute path to the `./manifests` folder in this repo.
 
 3. Optional: include additional DI registration and methods calls of your choice into `Program.cs` and run the program.
-4. This test program will apply the manifests matching your devices. 
+4. This test program will apply the manifests matching your devices.
 5. Validate the two IoT Edge devices now have modules deployed (note that the edge devices are cloud provisioned but no actual devices are connected so you won't see any reported values).
 
 ### Azure Function local testing in Visual Studio (Code or full IDE)
@@ -195,27 +199,28 @@ This project can be found under `./src/IoTEdgeDeploymentApi`.
 - `KEYVAULT_URI` = Key Vault URI
 - `ROOT_MANIFESTS_FOLDER` = Local absolute path to the `./manifests` folder in this repo.
 - `OpenApi__Auth__TenantId` = your AAD tenant ID
-- `OpenApi__Auth__Scope` = the name of the scope you created in Azure AD for the first app registration. Looks something like `https://xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx.fdpo.onmicrosoft.com/user_impersonation`
+- `OpenApi__Auth__Scope` = the name of the scope you created in Azure AD for the first app registration. Looks something like  `https:// xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx.fdpo.onmicrosoft.com/user_impersonation`
 - `OpenApi__Auth__Audience` = the AppId of the first app registration
 
-4. Run the function with Azure Functions tools v4.
-5. Test the function by opening the [Swagger UI][def].
+2. Run the function with Azure Functions tools v4.
+3. Test the function by opening the [Swagger UI][def].
 
 ## Testing the Azure Function in the cloud
 
 ### Publish function and configure access token
 
 1. Publish the Azure Function found under `./src/IoTEdgeDeploymentApi` through Visual Studio Code or Visual Studio IDE, per your preference.
-2. In Azure Portal, apply the following steps to `<yourprefix>Postman` Azure AD App Registration. 
-  - Create a client secret in the "Certificates & secrets" blade. The secret is displayed after clicking the Add button, make sure you copy it and store it securely in your credential store or Key Vault instance as it will not be displayed to you again.
-  - Go the "Overview" page and click on the Service Principal link at "Managed application in local directory".
-  - Navigate to the "Users and groups" section and add yourself or users of your choice.
+2. In Azure Portal, apply the following steps to `<yourprefix>Postman` Azure AD App Registration.
+
+- Create a client secret in the "Certificates & secrets" blade. The secret is displayed after clicking the Add button, make sure you copy it and store it securely in your credential store or Key Vault instance as it will not be displayed to you again.
+- Go the "Overview" page and click on the Service Principal link at "Managed application in local directory".
+- Navigate to the "Users and groups" section and add yourself or users of your choice.
 ![alt text](images/SPUsers.png "Add SP´s users")
 
 ### Test Azure Function and Swagger UI with Authentication
 
 1. In the Azure Portal, go to the deployed Azure Function App and copy the URL.
-3. In your browser go to `https://<yourfunctionname>.azurewebsites.net/api/swagger/ui/`. 
+2. In your browser go to `https://<yourfunctionname>.azurewebsites.net/api/swagger/ui/`.
 3. Because the Function App is secured by Azure AD you will be redirected to AD authentication. Consent and from there you can use the Swagger to test out the API.
 
 #### Swagger UI with Authentication (cloud)
@@ -231,11 +236,12 @@ On the cloud based Azure Function endpoint you have two options:
       ```
       az ad app list --display-name <yourprefixPostman>
       ```
+
     - Authenticate and run the API calls you would like to test.
 
   > Note this option requires Azure AD admin consent permissions, which might be disabled for you.
 
-2. Create a Bearer token by using the [Postman collection][def5]. 
+2. Create a Bearer token by using the [Postman collection][def5].
     - In Postman, change the following properties, then copy the generated bearer token:
 
       - Azure Tenant ID in URL
@@ -256,8 +262,8 @@ To clean-up all provisioned Azure resources you can use a convinience script tha
   ```powershell
   ./clean-dev-setup.ps1 -resourcesPrefix <yourprefix>
   ```
-2. You will be prompted to confirm deletion. This can take a few minutes.
 
+3. You will be prompted to confirm deletion. This can take a few minutes.
 
 ## Azure Pipelines CI/CD setup
 
@@ -268,8 +274,10 @@ Please see [Azure DevOps Pipelines: setting up a pipeline with IoTEdgeDeployment
 
 The performance of the engine while running and applying deployments has been evaluated. You can find some of our findings and recommendations [here](docs/iothubperf.md).
 
+## Loosely Coupled Logic
+
+Base processing logic of manifests is implementated as described below. But the solution is supposed to provide high flexibility and so consumers can inject own logic as described [here][def2]
+
 [def]: http://localhost:7071/api/swagger/ui
-[def2]: /.github/workflows/CD_Infra.yml
-[def3]: /deployment/createServicePrincipal.ps1
+[def2]: /docs/IoC-ModuleLogic.md
 [def5]: /postman/IoTEdgeDeploymentService.postman_collection.json
-[def7]: /deployment/deployArmTemplate.ps1

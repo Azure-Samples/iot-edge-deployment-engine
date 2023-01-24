@@ -21,6 +21,9 @@ namespace IoTEdgeDeploymentEngine.Accessor
 		/// <inheritdoc />
 		public async Task<string> GetSecretByName(string secretName)
 		{
+			if (null == _secretClient)
+				return string.Empty;
+				
 			var secret = await _secretClient.GetSecretAsync(secretName);
 			
 			return secret?.Value.Value;
