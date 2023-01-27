@@ -35,6 +35,8 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "images", "images", "{AE409D
 		..\images\SwaggerUI.png = ..\images\SwaggerUI.png
 	EndProjectSection
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "IoTEdgeDeploymentEngineTests", "IoTEdgeDeploymentEngineTests\IoTEdgeDeploymentEngineTests.csproj", "{A73CD8A9-A5E3-42F3-8656-0047C5ECC7E1}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -53,6 +55,10 @@ Global
 		{DF3E18D8-0931-43FA-9E5C-53264BAF1468}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{DF3E18D8-0931-43FA-9E5C-53264BAF1468}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{DF3E18D8-0931-43FA-9E5C-53264BAF1468}.Release|Any CPU.Build.0 = Release|Any CPU
+		{A73CD8A9-A5E3-42F3-8656-0047C5ECC7E1}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{A73CD8A9-A5E3-42F3-8656-0047C5ECC7E1}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{A73CD8A9-A5E3-42F3-8656-0047C5ECC7E1}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{A73CD8A9-A5E3-42F3-8656-0047C5ECC7E1}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
