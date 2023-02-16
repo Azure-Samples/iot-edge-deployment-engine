@@ -62,7 +62,7 @@ namespace IoTEdgeDeploymentEngine.Extension
 						: Enum.Parse<RestartPolicy>(mod?.RestartPolicy, true),
 					mod?.Settings?.CreateOptions == null
 						? string.Empty
-						: JsonConvert.SerializeObject(mod.Settings.CreateOptions),
+						: mod.Settings.CreateOptions,
 					string.IsNullOrEmpty(mod?.Status)
 						? ModuleStatus.Running
 						: Enum.Parse<ModuleStatus>(mod?.Status, true),
@@ -100,7 +100,7 @@ namespace IoTEdgeDeploymentEngine.Extension
 							: Enum.Parse<RestartPolicy>(mod?.RestartPolicy, true),
 						mod?.Settings?.CreateOptions == null
 							? string.Empty
-							: JsonConvert.SerializeObject(mod.Settings.CreateOptions),
+							: mod.Settings.CreateOptions,
 						string.IsNullOrEmpty(mod?.Status)
 							? ModuleStatus.Running
 							: Enum.Parse<ModuleStatus>(mod?.Status, true),
