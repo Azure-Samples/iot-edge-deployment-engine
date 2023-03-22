@@ -19,7 +19,6 @@ namespace IoTEdgeDeploymentEngine.Extension
 		/// Reads edgeAgents module specification
 		/// </summary>
 		/// <param name="edgeAgentModules">Modules content of edgeAgent specification</param>
-		/// <returns></returns>
 		public static List<EdgeModuleSpecification> GetEdgeAgentModulesSpec(
 			this IEnumerable<KeyValuePair<string, object>> edgeAgentModules)
 		{

@@ -101,12 +101,12 @@ namespace IoTEdgeDeploymentEngineTests
             KeyVaultSecret keyVaultSecret = SecretModelFactory.KeyVaultSecret(new SecretProperties("address"), "address");
             Response<KeyVaultSecret> response = Response.FromValue(keyVaultSecret, Mock.Of<Response>());
             secretMock.Setup(x => x.GetSecretAsync("address", null, It.IsAny<CancellationToken>())).ReturnsAsync(response);
-            var keyvaultAccessor = new KeyVaultAccessor(secretMock.Object);
+            var keyVaultAccessor = new KeyVaultAccessor(secretMock.Object, Mock.Of<ILogger<KeyVaultAccessor>>());
 
             IManifestConfig config = GetManifestConfig();
             IModuleLogic logic = new ModuleLogic(Mock.Of<ILogger<ModuleLogic>>());
 
-            var builder = new IoTEdgeDeploymentBuilder(mockClient.Object, keyvaultAccessor, config, logic, Mock.Of<ILogger<IoTEdgeDeploymentBuilder>>());
+            var builder = new IoTEdgeDeploymentBuilder(mockClient.Object, keyVaultAccessor, config, logic, Mock.Of<ILogger<IoTEdgeDeploymentBuilder>>());
 
             // Act
             await builder.ApplyDeployments();

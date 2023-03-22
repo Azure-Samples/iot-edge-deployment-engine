@@ -184,6 +184,7 @@ This project can be found under `./src/IoTEdgeDeploymentTester`.
 - `IOTHUB_HOSTNAME` = IoT Hub hostname in the form of `xxx.azure-devices.net`.
 - `KEYVAULT_URI` = Key Vault URI including `https://` prefix.
 - `ROOT_MANIFESTS_FOLDER` = absolute path to the `./manifests` folder in this repo.
+- `CONTINUE_ON_ERROR` = true|false to determine wheter program should throw an error or completes successfully, e.g. to continue next steps in AzDevOps pipeline etc.
 
 3. Optional: include additional DI registration and methods calls of your choice into `Program.cs` and run the program.
 4. This test program will apply the manifests matching your devices.

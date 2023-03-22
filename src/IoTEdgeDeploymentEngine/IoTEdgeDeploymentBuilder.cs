@@ -56,12 +56,16 @@ namespace IoTEdgeDeploymentEngine
 
 		private async Task ProcessDeviceAssignment(KeyValuePair<string, List<DeploymentConfig>> assignment)
 		{
+			_logger.LogInformation($"ProcessDeviceAssignment - Process deployments for deviceId: {assignment.Key}.");
+
 			var deployments = _moduleLogic.SelectDeployments(assignment).ToArray();
 			if (!deployments.Any())
 				return;
 
 			var edgeAgentModules = _moduleLogic.GetEdgeAgentModules(deployments).ToArray();
 			var edgeHubProps = _moduleLogic.GetEdgeHubProps(deployments).ToArray();
+
+			_logger.LogInformation("ProcessDeviceAssignment - Building EdgeAgent desired properties.");
 			var edgeAgentDesiredProperties = new EdgeAgentDesiredProperties()
 			{
 				SystemModuleVersion = edgeAgentModules.GetEdgeAgentSchemaVersion(),
@@ -70,11 +74,13 @@ namespace IoTEdgeDeploymentEngine
 				EdgeSystemModuleSpecifications = edgeAgentModules.GetEdgeAgentSystemModulesSpec()
 			};
 
+			_logger.LogInformation("ProcessDeviceAssignment - Building EdgeHub desired properties.");
 			EdgeHubDesiredProperties edgeHubConfig = new EdgeHubDesiredProperties()
 			{
 				Routes = edgeHubProps.GetEdgeHubRoutes()
 			};
 
+			_logger.LogInformation("ProcessDeviceAssignment - Building ConfigurationContent from desired properties.");
 			var configurationContent = new ConfigurationContent()
 				.SetEdgeHub(edgeHubConfig)
 				.SetEdgeAgent(edgeAgentDesiredProperties);
@@ -85,6 +91,8 @@ namespace IoTEdgeDeploymentEngine
 				if (!outerModule.Value.ContainsKey("properties.desired"))
 					continue;
 
+				_logger.LogInformation(
+					$"ProcessDeviceAssignment - Building desired properties for module {outerModule.Key}.");
 				configurationContent.SetModuleDesiredProperty(new ModuleSpecificationDesiredProperties()
 				{
 					Name = outerModule.Key,
@@ -94,19 +102,21 @@ namespace IoTEdgeDeploymentEngine
 
 			try
 			{
-				_logger.LogInformation(
-					$"ProcessDeviceAssignment - Applying configuration for device '{assignment.Key}'");
 				await _ioTHubAccessor.ApplyDeploymentPerDevice(assignment.Key, configurationContent);
 			}
 			catch (Exception ex)
 			{
-				_logger.LogError($"ProcessDeviceAssignment - Error applying deployment to device: {ex.Message}");
+				_logger.LogError(
+					$"Error in ProcessDeviceAssignment - Error applying deployment to device: {ex.Message}");
 			}
 		}
 
 		private async Task<Dictionary<string, List<DeploymentConfig>>> CreateDeviceDeploymentAssignments(
 			Dictionary<string, Configuration> files)
 		{
+			_logger.LogInformation(
+				$"CreateDeviceDeploymentAssignments - Building device/deployments assignments.");
+
 			var assignments = new Dictionary<string, List<DeploymentConfig>>();
 			foreach (var config in files)
 			{
@@ -128,8 +138,8 @@ namespace IoTEdgeDeploymentEngine
 				}
 			}
 
-			_logger.LogDebug(
-				$"CreateDeviceDeploymentAssignments - devices matching all target conditions: {assignments.Count}.");
+			_logger.LogInformation(
+				$"CreateDeviceDeploymentAssignments - Completed, number of devices matching all target conditions: {assignments.Count}.");
 
 			return assignments;
 		}
@@ -143,6 +153,8 @@ namespace IoTEdgeDeploymentEngine
 		/// <exception cref="ArgumentNullException">ArgumentNullException</exception>
 		public async Task AddDeployment(string fileName, string fileContent, DeploymentCategory category)
 		{
+			_logger.LogInformation($"AddDeployment - Adding new deployment - {fileName}.");
+			
 			if (!string.IsNullOrEmpty(fileName) && !string.IsNullOrEmpty(fileContent))
 			{
 				var directory = category == DeploymentCategory.AutomaticDeployment
@@ -150,6 +162,8 @@ namespace IoTEdgeDeploymentEngine
 					: _manifestConfig.DirectoryRootLayered;
 				var fileLocation = Path.Combine(directory, fileName);
 				await File.WriteAllTextAsync(fileLocation, fileContent);
+				
+				_logger.LogInformation($"AddDeployment - Successfully added new deployment - {fileName}.");
 			}
 			else
 			{
@@ -167,15 +181,18 @@ namespace IoTEdgeDeploymentEngine
 		/// <exception cref="FileNotFoundException">FileNotFoundException</exception>
 		public async Task<dynamic> GetFileContent(string fileName, DeploymentCategory category)
 		{
+			_logger.LogInformation($"GetFileContent - Retrieving file content for file {fileName}.");
+			
 			var directory = category == DeploymentCategory.AutomaticDeployment
 				? _manifestConfig.DirectoryRootAutomatic
 				: _manifestConfig.DirectoryRootLayered;
 			var fileLocation = Path.Combine(directory, fileName);
 			if (!File.Exists(fileLocation))
-				throw new FileNotFoundException($"File {fileName} not found.");
+				throw new FileNotFoundException($"Error in GetFileContent - File {fileName} not found.");
 
 			var content = await File.ReadAllTextAsync(fileLocation);
 
+			_logger.LogInformation($"GetFileContent - Successfully read file content for file {fileName}.");
 			return JsonConvert.DeserializeObject<dynamic>(content);
 		}
 
@@ -187,14 +204,15 @@ namespace IoTEdgeDeploymentEngine
 		/// <exception cref="FileNotFoundException">FileNotFoundException</exception>
 		private async Task<Dictionary<string, Configuration>> ReadAllFiles(params string[] directories)
 		{
-			//_logger.LogTrace("Reading layered deployment files");
+			_logger.LogInformation("ReadAllFiles - Reading layered deployment files");
+			
 			var fileContents = new Dictionary<string, Configuration>();
 			foreach (var directory in directories)
 			{
 				foreach (var file in Directory.EnumerateFiles(directory, "*.json"))
 				{
 					if (!File.Exists(file))
-						throw new FileNotFoundException($"File {file} not found.");
+						throw new FileNotFoundException($"Error in ReadAllFiles - File {file} not found.");
 
 					var fileContent = await File.ReadAllTextAsync(file);
 					fileContent = await LoadSensitiveData(fileContent);
@@ -204,12 +222,14 @@ namespace IoTEdgeDeploymentEngine
 				}
 			}
 
-			//_logger.LogTrace("Layered deployment files successfully read");
+			_logger.LogInformation("ReadAllFiles - Layered deployment files successfully read");
 			return fileContents;
 		}
 
 		private async Task<string> LoadSensitiveData(string file)
 		{
+			_logger.LogInformation($"LoadSensitiveData - Retrieving sensitive data from secret store.");
+			
 			var regexMatch = Regex.Match(file, SecretNameRegEx, RegexOptions.IgnoreCase | RegexOptions.Compiled);
 
 			while (regexMatch.Success)
@@ -220,6 +240,7 @@ namespace IoTEdgeDeploymentEngine
 				regexMatch = regexMatch.NextMatch();
 			}
 
+			_logger.LogInformation($"LoadSensitiveData - Successfully loaded sensitive data from secret store.");
 			return file;
 		}
 	}

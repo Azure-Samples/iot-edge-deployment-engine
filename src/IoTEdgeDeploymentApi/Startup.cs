@@ -20,6 +20,7 @@ using IoTEdgeDeploymentApi.Security;
 using IoTEdgeDeploymentEngine.Extension;
 using IoTEdgeDeploymentEngine.Logic;
 using IoTEdgeDeploymentEngine.Util;
+using Microsoft.Extensions.Logging;
 using Polly.Registry;
 
 [assembly: FunctionsStartup(typeof(Startup))]
@@ -45,23 +46,27 @@ namespace IoTEdgeDeploymentApi
 			builder.Services
 				.AddSingleton<RegistryManager>((s) =>
 					RegistryManager.Create(iotHubHostname, tokenCredential))
-				.AddSingleton<IKeyVaultAccessor>(_ =>
+				.AddSingleton<IKeyVaultAccessor>((s) =>
 				{
+					var logger = s.GetRequiredService<ILogger<KeyVaultAccessor>>();
 					if (string.IsNullOrEmpty(keyVaultUri))
-						return new KeyVaultAccessor(null);
-					
-					return new KeyVaultAccessor(new SecretClient(new Uri(keyVaultUri),
-						tokenCredential, new SecretClientOptions()
-						{
-							Retry =
+						return new KeyVaultAccessor(null, logger);
+
+					return new KeyVaultAccessor(new SecretClient(
+							new Uri(keyVaultUri),
+							tokenCredential,
+							new SecretClientOptions()
 							{
-								MaxRetries = 3,
-								Delay = TimeSpan.FromSeconds(5),
-								MaxDelay = TimeSpan.FromSeconds(15),
-								Mode = RetryMode.Exponential,
-								NetworkTimeout = TimeSpan.FromSeconds(60)
-							}
-						}));
+								Retry =
+								{
+									MaxRetries = 3,
+									Delay = TimeSpan.FromSeconds(5),
+									MaxDelay = TimeSpan.FromSeconds(15),
+									Mode = RetryMode.Exponential,
+									NetworkTimeout = TimeSpan.FromSeconds(60)
+								}
+							}),
+						logger);
 				})
 				.AddSingleton<IIoTEdgeDeploymentBuilder, IoTEdgeDeploymentBuilder>()
 				.AddSingleton<IJwtValidator, JwtValidator>()
@@ -122,9 +127,9 @@ namespace IoTEdgeDeploymentApi
 		private void CreateManifestSubFolders(string directory)
 		{
 			if (!Directory.Exists(directory))
-			{ 
-				Directory.CreateDirectory(directory); 
+			{
+				Directory.CreateDirectory(directory);
 			}
-        }
+		}
 	}
 }

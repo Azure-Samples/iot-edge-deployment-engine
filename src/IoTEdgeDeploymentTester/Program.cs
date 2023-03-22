@@ -13,18 +13,31 @@ using Azure.Security.KeyVault.Secrets;
 using IoTEdgeDeploymentEngine.Extension;
 using IoTEdgeDeploymentEngine.Logic;
 using IoTEdgeDeploymentEngine.Util;
+using Microsoft.Extensions.Azure;
 using Polly;
 using Polly.Registry;
 
 DotEnv.Load();
 var host = ConfigureServices(args);
 var logger = host.Services.GetRequiredService<ILogger<Program>>();
-logger.LogInformation("Host created.");
 
-var serviceDeployment = host.Services.GetRequiredService<IIoTEdgeDeploymentBuilder>();
-await serviceDeployment.ApplyDeployments();
+logger.LogInformation("IoT Edge Deployment Engine - Run started.");
 
-logger.LogInformation("Done.");
+EnvReader.TryGetBooleanValue("CONTINUE_ON_ERROR", out var continueOnError);
+try
+{
+	var serviceDeployment = host.Services.GetRequiredService<IIoTEdgeDeploymentBuilder>();
+	await serviceDeployment.ApplyDeployments();
+	
+	logger.LogInformation("IoT Edge Deployment Engine - Run completed.");
+}
+catch (Exception ex)
+{
+	logger.LogError(
+		$"IoT Edge Deployment Engine resulted with errors. Please check the previous log of the run - {ex.Message}");
+	if (!continueOnError)
+		throw;
+}
 
 return;
 
@@ -43,21 +56,25 @@ IHost ConfigureServices(string[] args)
 				.AddSingleton<RegistryManager>(_ => RegistryManager.Create(iotHubHostName, tokenCredential))
 				.AddSingleton<IKeyVaultAccessor>(_ =>
 				{
+					var logger = services.BuildServiceProvider().GetRequiredService<ILogger<KeyVaultAccessor>>();
 					if (string.IsNullOrEmpty(keyVaultUri))
-						return new KeyVaultAccessor(null);
+						return new KeyVaultAccessor(null, logger);
 					
-					return new KeyVaultAccessor(new SecretClient(new Uri(keyVaultUri),
-						tokenCredential, new SecretClientOptions()
-						{
-							Retry =
+					return new KeyVaultAccessor(new SecretClient(
+							new Uri(keyVaultUri),
+							tokenCredential,
+							new SecretClientOptions()
 							{
-								MaxRetries = 3,
-								Delay = TimeSpan.FromSeconds(5),
-								MaxDelay = TimeSpan.FromSeconds(15),
-								Mode = RetryMode.Exponential,
-								NetworkTimeout = TimeSpan.FromSeconds(60)
-							}
-						}));
+								Retry =
+								{
+									MaxRetries = 3,
+									Delay = TimeSpan.FromSeconds(5),
+									MaxDelay = TimeSpan.FromSeconds(15),
+									Mode = RetryMode.Exponential,
+									NetworkTimeout = TimeSpan.FromSeconds(60)
+								}
+							}),
+						logger);
 				})
 				.AddSingleton<IIoTEdgeDeploymentBuilder, IoTEdgeDeploymentBuilder>()
 				.AddSingleton<IPolicyRegistry<string>>(_ =>

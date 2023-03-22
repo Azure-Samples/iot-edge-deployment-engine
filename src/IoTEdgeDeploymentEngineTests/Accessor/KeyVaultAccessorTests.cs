@@ -1,6 +1,7 @@
 ﻿using Azure;
 using Azure.Security.KeyVault.Secrets;
 using IoTEdgeDeploymentEngine.Accessor;
+using Microsoft.Extensions.Logging;
 using Moq;
 using Xunit;
 
@@ -18,7 +19,7 @@ namespace IoTEdgeDeploymentEngineTests.Accessor
 
             secretMock.Setup(x => x.GetSecretAsync("address", null, It.IsAny<CancellationToken>())).ReturnsAsync(response);
 
-            var keyVaultAccessor = new KeyVaultAccessor(secretMock.Object);
+            var keyVaultAccessor = new KeyVaultAccessor(secretMock.Object, Mock.Of<ILogger<KeyVaultAccessor>>());
             // Act
             var secret = await keyVaultAccessor.GetSecretByName("address");
 

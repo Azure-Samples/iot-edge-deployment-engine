@@ -26,6 +26,8 @@ namespace IoTEdgeDeploymentEngine.Logic
 		/// <inheritdoc />
 		public virtual IEnumerable<DeploymentConfig> SelectDeployments(KeyValuePair<string, List<DeploymentConfig>> assignment)
 		{
+			_logger.LogInformation("SelectDeployments - Prioritization of deployments started.");
+			
 			if (!assignment.Value.Any(a => a.Category == DeploymentCategory.AutomaticDeployment))
 			{
 				_logger.LogWarning(
@@ -49,6 +51,8 @@ namespace IoTEdgeDeploymentEngine.Logic
 					 a.Category == DeploymentCategory.AutomaticDeployment))
 				.OrderBy(a => a.Priority)
 				.ThenBy(a => a.ManifestConfig.CreatedTimeUtc);
+			
+			_logger.LogInformation("SelectDeployments - Successfully prioritized of deployments.");
 			return ordered;
 		}
 		
@@ -60,6 +64,8 @@ namespace IoTEdgeDeploymentEngine.Logic
 		public virtual IEnumerable<KeyValuePair<string, object>> GetEdgeAgentModules(
 			IEnumerable<DeploymentConfig> deploymentConfigs)
 		{
+			_logger.LogInformation("GetEdgeAgentModules - Selecting EdgeAgent modules from manifest.");
+			
 			return deploymentConfigs
 				.Where(c => c.ManifestConfig.Content.ModulesContent.ContainsKey("$edgeAgent"))
 				.OrderByDescending(c => c.Priority)
@@ -72,6 +78,8 @@ namespace IoTEdgeDeploymentEngine.Logic
 		public virtual IEnumerable<KeyValuePair<string, object>> GetEdgeHubProps(
 			IEnumerable<DeploymentConfig> deploymentConfigs)
 		{
+			_logger.LogInformation("GetEdgeHubProps - Selecting EdgeHub properties from manifest.");
+			
 			return deploymentConfigs
 				.Where(c => c.ManifestConfig.Content.ModulesContent.ContainsKey("$edgeHub"))
 				.OrderByDescending(c => c.Priority)
@@ -84,6 +92,8 @@ namespace IoTEdgeDeploymentEngine.Logic
 		public virtual IEnumerable<KeyValuePair<string, IDictionary<string, object>>> GetOuterModules(
 			IEnumerable<DeploymentConfig> deploymentConfigs)
 		{
+			_logger.LogInformation("GetEdgeHubProps - Selecting modules from manifest.");
+			
 			return deploymentConfigs
 				.OrderByDescending(c => c.Priority)
 				.ThenByDescending(c => c.ManifestConfig.CreatedTimeUtc)

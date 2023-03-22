@@ -37,6 +37,9 @@ namespace IoTEdgeDeploymentEngine.Accessor
 		/// <inheritdoc />
 		public async Task<IEnumerable<string>> GetDeviceIdsByCondition(string targetCondition)
 		{
+			_logger.LogInformation(
+				$"GetDeviceIdsByCondition - Retrieving devices from IoTHub for query condition: {targetCondition}.");
+			
 			var deviceIds = new List<string>();
 
 			var sql = $"Select * from devices where {targetCondition}";
@@ -53,17 +56,26 @@ namespace IoTEdgeDeploymentEngine.Accessor
 				}
 			},
 			context);
-			return deviceIds;
+
+            _logger.LogInformation(
+	            $"GetDeviceIdsByCondition - Successfully retrieved devices from IoTHub for query condition: {targetCondition}.");
+            return deviceIds;
 		}
 
 		/// <inheritdoc />
 		public async Task ApplyDeploymentPerDevice(string deviceId, ConfigurationContent configurationContent)
 		{
+			_logger.LogInformation(
+				$"ProcessDeviceAssignment - Applying configuration for deviceId: {deviceId}");
+			
             var context = new Polly.Context().WithLogger<ILogger>(_logger);
             await _retryPolicy.ExecuteAsync(async action =>
 			{
 				await _registryManager.ApplyConfigurationContentOnDeviceAsync(deviceId, configurationContent);
 			}, context);
+            
+            _logger.LogInformation(
+	            $"ProcessDeviceAssignment - Successfully applied configuration for deviceId: {deviceId}");
 		}
 	}
 }
