@@ -277,7 +277,16 @@ The performance of the engine while running and applying deployments has been ev
 
 ## Loosely Coupled Logic
 
-Base processing logic of manifests is implementated as described below. But the solution is supposed to provide high flexibility and so consumers can inject own logic as described [here][def2]
+Base processing logic of manifests is implemented as described above. But the solution is supposed to provide high flexibility and so consumers can inject own logic as described [here][def2]
+
+## Disclaimer
+
+This project has been created to improve IoT Edge deployments with high flexibility matching own requirements.
+No guarantees can be offered as to response times on issues, feature requests, or to the long term road map/support for the project.
+
+Taking the above statement into account the team involved in this effort wish for the project to evolve into a stable, production ready resource with active contributors from Microsoft and the wider community.
+
+This project uses GitHub Issues to track bugs and feature requests. Please search the existing issues before filing new issues to avoid duplicates. For new issues, file your bug or feature request as a new Issue.
 
 [def]: http://localhost:7071/api/swagger/ui
 [def2]: /docs/IoC-ModuleLogic.md
