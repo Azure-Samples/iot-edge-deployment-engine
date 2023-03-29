@@ -68,8 +68,6 @@ You can commit the generated files to your code repo. Here's an example of a bas
 ### Prepare variable and secrets in Azure Key Vault.
 
 Add the following variables to the Azure Key Vault you will be using for storing secrets used by the pipeline:
-  - `GITPAT` = GitHub personal access token
-  - `GITUSER` = a GitHub repo with access to this private repo
   - `IOTHUBHOSTNAME` = IoT Hub hostname in the form of `xxx.azure-devices.net`
   - `KEYVAULTURI` = Key Vault URI including `https://` prefix. This could be another Key Vault account than the one you are adding your secrets to, as it will be used for replacing secrets in manifest files. This is optional and only needed if you are replacing secret placeholders in the manifest `json` files.
 
@@ -108,10 +106,8 @@ az role assignment create --assignee $principalId `
 ### Setting up the Azure DevOps Pipeline
 
 1. Ensure you have an Azure DevOps project or create a new one.
-<!-- TODO Temporary (to be replaced when moving to Azure-Samples) -->
-2. If this repo is private, create a GitHub [Private Access Token](https://docs.github.com/en/authentication/keeping-your-account-and-data-secure/creating-a-personal-access-token) so this repo can be cloned in the Azure DevOps pipeline.
-3. Create or ensure you have an Azure Service Connection. This will be used to authenticate to the Azure IoT Hub and Key Vault resources.
-4. Create a new pipeline and enter the following YAML, replacing the values in `<>` with your specific values.
+2. Create or ensure you have an Azure Service Connection. This will be used to authenticate to the Azure IoT Hub and Key Vault resources.
+3. Create a new pipeline and enter the following YAML, replacing the values in `<>` with your specific values.
 
 ```yaml
 trigger:
@@ -124,7 +120,7 @@ variables:
 - name: buildConfiguration
   value: 'Release'
 - name: ROOT_MANIFESTS_FOLDER
-  value: $(Build.SourcesDirectory)/manifests
+  value: $(Build.SourcesDirectory)/manifestsroot
 - name: CONTINUE_ON_ERROR
   value: true
 
@@ -134,7 +130,7 @@ steps:
   inputs:
     azureSubscription: '<REPLACE: YOUR AZURE SERVICECONNECTION>'
     KeyVaultName: '<REPLACE: NAME OF THE KEY VAULT>'
-    SecretsFilter: 'GITPAT,GITURI,GITUSER,IOTHUBHOSTNAME,KEYVAULTURI'
+    SecretsFilter: 'IOTHUBHOSTNAME,KEYVAULTURI'
     RunAsPreJob: true
 
 
@@ -142,7 +138,7 @@ steps:
   inputs:
     script: |
       echo 'Cloning engine repo'
-      git clone https://$(GITUSER):$(GITPAT)@github.com/Bindsi/IoTEdgeDeploymentService.git --progress --branch main --single-branch --depth=1 $(Build.SourcesDirectory)/engine
+      git clone https://github.com/Azure-Samples/iot-edge-deployment-engine.git --progress --branch main --single-branch --depth=1 $(Build.SourcesDirectory)/engine
 
 - task: CmdLine@2
   inputs:
@@ -158,11 +154,11 @@ steps:
     inlineScript: 'dotnet run --project "$(Build.SourcesDirectory)/engine/src/IoTEdgeDeploymentTester/IoTEdgeDeploymentTester.csproj" --configuration Debug'
 
 ```
-5. Ensure the path to the `manifests` defined by the variable `ROOT_MANIFESTS_FOLDER` is correct in the pipeline. In the current care the Azure DevOps project only has one repo. If you have multiple you will need to correctly address it, see [Build variables, specifically `Build.SourcesDirectory`](https://learn.microsoft.com/en-us/azure/devops/pipelines/build/variables?view=azure-devops&tabs=yaml#build-variables-devops-services).
-6. Decide how you want the .NET Console task to behave in case of failure: set the variable `CONTINUE_ON_ERROR`.
+4. Ensure the path to the `manifestsroot` defined by the variable `ROOT_MANIFESTS_FOLDER` is correct in the pipeline. In the current care the Azure DevOps project only has one repo. If you have multiple you will need to correctly address it, see [Build variables, specifically `Build.SourcesDirectory`](https://learn.microsoft.com/en-us/azure/devops/pipelines/build/variables?view=azure-devops&tabs=yaml#build-variables-devops-services).
+5. Decide how you want the .NET Console task to behave in case of failure: set the variable `CONTINUE_ON_ERROR`.
   - `true`: in this case the Console app might return an error but still continue as the task itself catches the error. 
   - `false`: the task will exit with an error and the Pipeline will return as failed.
-7. Run the pipeline and validate each step executed successfully.
+6. Run the pipeline and validate each step executed successfully.
 
 ## Clean-up resources
 
