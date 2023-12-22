@@ -1,3 +1,5 @@
+>Note: This repository has been archived and is no longer maintained. Please use the [Azure Edge Extensions IoT Edge Deployment Engine](https://github.com/Azure-Samples/azure-edge-extensions-iotedge-deploymentengine-dotnet) instead.
+
 [![Azure ARM](https://github.com/Bindsi/IoTEdgeDeploymentService/actions/workflows/CD_Infra.yml/badge.svg)](https://github.com/Bindsi/IoTEdgeDeploymentService/actions/workflows/CD_Infra.yml)
 
 # Contents
